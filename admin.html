@@ -1,0 +1,3029 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WORLD SCRIPT — Админка</title>
+  <style>
+    :root{
+      --bg:#090b10;
+      --panel:#12151c;
+      --panel2:#0f1218;
+      --stroke:rgba(255,255,255,.08);
+      --stroke-strong:rgba(255,255,255,.14);
+      --text:#f4f7fb;
+      --muted:#94a0b0;
+      --green:#42f5ac;
+      --cyan:#63ddff;
+      --red:#ff6178;
+      --yellow:#ffd166;
+      --pink:#ff4fa0;
+      --violet:#8b7dff;
+      --shadow:0 24px 70px rgba(0,0,0,.42);
+      --radius:22px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 20% 18%, rgba(95,125,255,.14), transparent 26%),
+        radial-gradient(circle at 82% 16%, rgba(255,88,114,.13), transparent 24%),
+        radial-gradient(circle at 68% 80%, rgba(99,221,255,.13), transparent 28%),
+        linear-gradient(180deg,#07090d 0%,#0a0d13 45%,#07090f 100%);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:-20%;
+      background:
+        radial-gradient(circle at 25% 30%, rgba(255,79,160,.06), transparent 18%),
+        radial-gradient(circle at 70% 20%, rgba(99,221,255,.06), transparent 18%),
+        radial-gradient(circle at 55% 75%, rgba(66,245,172,.05), transparent 20%);
+      filter:blur(80px);
+      animation:bgFloat 16s ease-in-out infinite alternate;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    @keyframes bgFloat{
+      from{transform:translateY(0) scale(1)}
+      to{transform:translateY(-18px) scale(1.04)}
+    }
+
+    .wrap{
+      width:min(1780px, calc(100% - 24px));
+      margin:12px auto;
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      align-items:center;
+      padding:14px 16px;
+      background:rgba(18,21,28,.84);
+      border:1px solid var(--stroke);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+      margin-bottom:12px;
+      animation:fadeUp .45s cubic-bezier(.22,.68,0,1);
+    }
+
+    .brand{
+      font-size:24px;
+      font-weight:900;
+      letter-spacing:-.03em;
+    }
+
+    .muted{color:var(--muted)}
+    .hidden{display:none !important}
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      color:#fff;
+      font-weight:800;
+      font-size:14px;
+      padding:12px 16px;
+      border-radius:14px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--stroke);
+      transition:
+        transform .24s cubic-bezier(.22,.68,0,1),
+        box-shadow .24s ease,
+        border-color .24s ease,
+        background .24s ease;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .btn::after{
+      content:"";
+      position:absolute;
+      top:0;
+      left:-120%;
+      width:60%;
+      height:100%;
+      transform:skewX(-20deg);
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent);
+      opacity:0;
+    }
+
+    .btn:hover{
+      transform:translateY(-2px);
+      border-color:var(--stroke-strong);
+      box-shadow:0 10px 24px rgba(0,0,0,.20);
+    }
+
+    .btn:hover::after{
+      opacity:1;
+      animation:btnShine .8s ease;
+    }
+
+    @keyframes btnShine{
+      from{left:-120%}
+      to{left:150%}
+    }
+
+    .btn.green{background:linear-gradient(90deg,#1fb36f,#42f5ac); color:#06120d; border-color:rgba(66,245,172,.28)}
+    .btn.red{background:linear-gradient(90deg,#c44158,#ff6178); border-color:rgba(255,97,120,.25)}
+    .btn.yellow{background:linear-gradient(90deg,#c89d35,#ffd166); color:#171206; border-color:rgba(255,209,102,.24)}
+    .btn.pink{background:linear-gradient(90deg,#cf3c86,#ff4fa0); border-color:rgba(255,79,160,.25)}
+    .btn.cyan{background:linear-gradient(90deg,#2aa4c7,#63ddff); color:#041117; border-color:rgba(99,221,255,.24)}
+    .btn.small{padding:9px 12px;font-size:12px}
+
+    .main-sections{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+      animation:fadeUp .5s cubic-bezier(.22,.68,0,1);
+    }
+
+    .main-section-btn{
+      padding:12px 16px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      cursor:pointer;
+      font-weight:800;
+      font-size:14px;
+      transition:.24s ease;
+    }
+
+    .main-section-btn:hover{
+      transform:translateY(-2px);
+      border-color:var(--stroke-strong);
+      background:rgba(255,255,255,.06);
+    }
+
+    .main-section-btn.active{
+      background:linear-gradient(90deg, rgba(66,245,172,.16), rgba(99,221,255,.12));
+      border-color:rgba(255,255,255,.14);
+      box-shadow:0 0 0 1px rgba(255,255,255,.03), 0 10px 22px rgba(0,0,0,.18);
+    }
+
+    .layout{
+      display:grid;
+      grid-template-columns: 500px 1fr;
+      gap:12px;
+      min-height:calc(100vh - 160px);
+      animation:fadeUp .55s cubic-bezier(.22,.68,0,1);
+    }
+
+    .panel{
+      background:rgba(18,21,28,.88);
+      border:1px solid var(--stroke);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(12px);
+      overflow:hidden;
+      position:relative;
+      transition:transform .28s ease, border-color .28s ease, box-shadow .28s ease;
+    }
+
+    .panel:hover{
+      border-color:rgba(255,255,255,.12);
+      box-shadow:0 28px 80px rgba(0,0,0,.44);
+    }
+
+    .panel::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.025), transparent 30%, transparent 70%, rgba(255,255,255,.018)),
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.04), transparent 20%);
+      opacity:0;
+      transition:opacity .3s ease;
+      pointer-events:none;
+      z-index:0;
+    }
+
+    .panel:hover::before{opacity:1}
+
+    .sidebar{
+      display:flex;
+      flex-direction:column;
+      min-height:100%;
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      padding:12px;
+      border-bottom:1px solid var(--stroke);
+      flex-wrap:wrap;
+      position:relative;
+      z-index:1;
+    }
+
+    .tab-btn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      cursor:pointer;
+      font-weight:700;
+      transition:.22s ease;
+    }
+
+    .tab-btn:hover{
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.06);
+      border-color:rgba(255,255,255,.12);
+    }
+
+    .tab-btn.active{
+      background:linear-gradient(90deg, rgba(66,245,172,.16), rgba(99,221,255,.12));
+      border-color:rgba(255,255,255,.14);
+    }
+
+    .panel-body{
+      padding:14px;
+      overflow:auto;
+      position:relative;
+      z-index:1;
+    }
+
+    .field, .textarea, .select{
+      width:100%;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      color:#fff;
+      border-radius:14px;
+      padding:12px 14px;
+      outline:none;
+      font-size:14px;
+      margin-bottom:10px;
+      transition:border-color .18s ease, box-shadow .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .field:hover, .textarea:hover, .select:hover{
+      border-color:rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+    }
+
+    .field:focus, .textarea:focus, .select:focus{
+      transform:translateY(-1px);
+      border-color:rgba(99,221,255,.30);
+      box-shadow:0 0 0 3px rgba(99,221,255,.08);
+      background:rgba(255,255,255,.06);
+    }
+
+    .textarea{
+      min-height:100px;
+      resize:vertical;
+    }
+
+    .label{
+      display:block;
+      font-size:13px;
+      color:#b5c0cd;
+      margin:8px 0 6px;
+      font-weight:700;
+    }
+
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+    .card-list{
+      display:grid;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .mini-card{
+      padding:12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      cursor:pointer;
+      transition:.22s ease;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .mini-card::before,
+    .simple-item::before,
+    .info-box::before,
+    .bulk-box::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(135deg, rgba(255,255,255,.03), transparent 30%, transparent 70%, rgba(255,255,255,.02));
+      opacity:0;
+      transition:opacity .25s ease;
+      pointer-events:none;
+    }
+
+    .mini-card:hover,
+    .simple-item:hover,
+    .info-box:hover,
+    .bulk-box:hover{
+      transform:translateY(-2px);
+      border-color:rgba(255,255,255,.12);
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .mini-card:hover::before,
+    .simple-item:hover::before,
+    .info-box:hover::before,
+    .bulk-box:hover::before{
+      opacity:1;
+    }
+
+    .mini-card.active{
+      border-color:rgba(99,221,255,.22);
+      background:rgba(99,221,255,.08);
+    }
+
+    .mini-card-check{margin-top:3px}
+    .mini-card-content{flex:1;min-width:0;position:relative;z-index:1}
+    .mini-card-title{font-weight:800;margin-bottom:4px}
+    .mini-card-meta{font-size:12px;color:var(--muted)}
+
+    .preview-wrap{
+      display:grid;
+      grid-template-rows:auto 1fr;
+      min-height:100%;
+    }
+
+    .preview-head{
+      padding:14px 16px;
+      border-bottom:1px solid var(--stroke);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:1;
+    }
+
+    .preview-grid{
+      padding:16px;
+      display:grid;
+      grid-template-columns:repeat(12, 1fr);
+      gap:16px;
+      grid-auto-rows:90px;
+      align-content:start;
+      overflow:auto;
+      min-height:600px;
+    }
+
+    .preview-card{
+      position:relative;
+      overflow:hidden;
+      border-radius:28px;
+      border:1px solid rgba(255,255,255,.08);
+      background:linear-gradient(180deg, rgba(18,20,25,.96), rgba(10,12,16,.98));
+      box-shadow:0 24px 70px rgba(0,0,0,.32);
+      padding:24px;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      isolation:isolate;
+      transition:.25s ease;
+      cursor:pointer;
+    }
+
+    .preview-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 30px 80px rgba(0,0,0,.38);
+    }
+
+    .preview-card.active{
+      outline:2px solid rgba(99,221,255,.45);
+      outline-offset:2px;
+    }
+
+    .preview-card.multi{
+      outline:2px solid rgba(255,209,102,.38);
+      outline-offset:2px;
+    }
+
+    .preview-card::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:radial-gradient(circle at 85% 82%, rgba(99,221,255,.08), transparent 18%);
+      z-index:0;
+      pointer-events:none;
+    }
+
+    .preview-card > *{position:relative;z-index:1}
+    .preview-top{font-size:14px;color:#dce4ef;margin-bottom:14px;font-weight:700}
+    .preview-card h3{margin:0 0 12px;font-size:32px;line-height:1.02;letter-spacing:-.04em;max-width:72%}
+    .preview-card p{margin:0;color:#a7b1be;line-height:1.7;max-width:70%;font-size:15px}
+    .preview-card ul{margin:16px 0 0;padding-left:18px;color:#e1e8f2;line-height:1.8;max-width:70%;font-size:14px}
+    .preview-emoji{position:absolute;right:22px;bottom:10px;font-size:110px;opacity:.14;pointer-events:none;user-select:none}
+    .preview-image{position:absolute;pointer-events:none;user-select:none;object-fit:contain}
+
+    .tool-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .status{margin-top:8px;font-size:13px}
+    .success{color:#86f0bc}
+    .error{color:#ff98a8}
+
+    .login-box{
+      max-width:440px;
+      margin:80px auto;
+      padding:20px;
+      background:rgba(18,21,28,.9);
+      border:1px solid var(--stroke);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      animation:fadeUp .45s cubic-bezier(.22,.68,0,1);
+    }
+
+    .section-title{
+      font-size:20px;
+      font-weight:900;
+      margin-bottom:10px;
+    }
+
+    .upload-box{
+      border:1px dashed rgba(255,255,255,.12);
+      background:rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:14px;
+      text-align:center;
+      cursor:pointer;
+      transition:.2s ease;
+      margin-bottom:10px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .upload-box:hover{
+      border-color:rgba(99,221,255,.28);
+      background:rgba(99,221,255,.05);
+      transform:translateY(-2px);
+    }
+
+    .upload-preview{
+      width:100%;
+      max-height:180px;
+      object-fit:contain;
+      border-radius:14px;
+      background:rgba(0,0,0,.25);
+      display:block;
+      margin-top:10px;
+    }
+
+    .bulk-box,
+    .info-box,
+    .simple-item{
+      padding:12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.06);
+      margin-bottom:12px;
+      position:relative;
+      overflow:hidden;
+      transition:.24s ease;
+    }
+
+    .simple-list{
+      display:grid;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .simple-item-title{
+      font-weight:800;
+      margin-bottom:6px;
+      position:relative;
+      z-index:1;
+    }
+
+    .simple-item-meta{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:8px;
+      position:relative;
+      z-index:1;
+    }
+
+    .simple-item-text{
+      font-size:14px;
+      line-height:1.6;
+      color:#dbe4ef;
+      white-space:pre-wrap;
+      word-break:break-word;
+      position:relative;
+      z-index:1;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:.2px;
+      border:1px solid transparent;
+    }
+
+    .badge.idea-sent{
+      background:rgba(255,209,102,.12);
+      color:#ffd166;
+      border-color:rgba(255,209,102,.18);
+    }
+
+    .badge.idea-approved,
+    .badge.bug-solved{
+      background:rgba(66,245,172,.12);
+      color:#86f0bc;
+      border-color:rgba(66,245,172,.18);
+    }
+
+    .badge.idea-rejected,
+    .badge.bug-rejected{
+      background:rgba(255,97,120,.12);
+      color:#ff98a8;
+      border-color:rgba(255,97,120,.18);
+    }
+
+    .badge.bug-in_progress{
+      background:rgba(99,221,255,.12);
+      color:#8ce8ff;
+      border-color:rgba(99,221,255,.18);
+    }
+
+    .object-item,
+    .prize-item,
+    .player-item{
+      padding:12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      cursor:pointer;
+      transition:.24s ease;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .object-item:hover,
+    .prize-item:hover,
+    .player-item:hover{
+      transform:translateY(-2px);
+      border-color:rgba(255,255,255,.12);
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    }
+
+    .object-item.active,
+    .prize-item.active,
+    .player-item.active{
+      border-color:rgba(99,221,255,.22);
+      background:rgba(99,221,255,.08);
+    }
+
+    .object-thumb,
+    .prize-thumb{
+      width:64px;
+      height:64px;
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      flex-shrink:0;
+      font-size:26px;
+    }
+
+    .object-thumb img,
+    .prize-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .row-flex{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.05);
+    }
+
+    .chip.green{color:#86f0bc;border-color:rgba(66,245,172,.18);background:rgba(66,245,172,.08)}
+    .chip.red{color:#ff98a8;border-color:rgba(255,97,120,.18);background:rgba(255,97,120,.08)}
+    .chip.yellow{color:#ffd166;border-color:rgba(255,209,102,.18);background:rgba(255,209,102,.08)}
+    .chip.cyan{color:#8ce8ff;border-color:rgba(99,221,255,.18);background:rgba(99,221,255,.08)}
+
+    @keyframes fadeUp{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    @media (max-width: 1280px){
+      .layout{grid-template-columns:1fr}
+      .preview-grid{grid-template-columns:repeat(6, 1fr)}
+      .preview-card{grid-column:span 6 !important;grid-row:auto !important}
+      .preview-card h3,.preview-card p,.preview-card ul{max-width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="loginView" class="login-box">
+      <div class="section-title">Вход в админку WORLD SCRIPT</div>
+      <div class="muted" style="margin-bottom:12px;">Войди под пользователем с ролью <b>admin</b></div>
+      <input id="loginLogin" class="field" placeholder="Логин" />
+      <input id="loginPassword" class="field" type="password" placeholder="Пароль" />
+      <button class="btn green" style="width:100%;" onclick="adminLogin()">Войти</button>
+      <div id="loginMsg" class="status error"></div>
+    </div>
+
+    <div id="adminView" class="hidden">
+      <div class="topbar">
+        <div>
+          <div class="brand">WORLD SCRIPT — Админка</div>
+          <div class="muted" id="adminUserText">—</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn small" onclick="loadCurrentSection()">Обновить раздел</button>
+          <button class="btn yellow small" id="saveSelectedBtn" onclick="saveSelectedCards()">Сохранить выбранные</button>
+          <button class="btn red small" onclick="adminLogout()">Выйти</button>
+        </div>
+      </div>
+
+      <div class="main-sections">
+        <button class="main-section-btn active" id="mainSectionDesignBtn" onclick="switchMainSection('design')">🎨 Оформление сайта</button>
+        <button class="main-section-btn" id="mainSectionIdeasBtn" onclick="switchMainSection('ideas')">💡 Предложения PS</button>
+        <button class="main-section-btn" id="mainSectionBugsBtn" onclick="switchMainSection('bugs')">🐞 Баги / недочёты PS</button>
+        <button class="main-section-btn" id="mainSectionFinanceBtn" onclick="switchMainSection('finance')">💰 Финансы WS</button>
+        <button class="main-section-btn" id="mainSectionObjectsBtn" onclick="switchMainSection('objects')">📦 Предметы магазина</button>
+        <button class="main-section-btn" id="mainSectionRouletteBtn" onclick="switchMainSection('roulette')">🎰 Призы в рулетке</button>
+      </div>
+
+      <!-- ================= DESIGN ================= -->
+      <div id="designSection">
+        <div class="layout">
+          <div class="panel sidebar">
+            <div class="tabs">
+              <button class="tab-btn active" id="tabCardsBtn" onclick="switchDesignTab('cards')">Карточки</button>
+              <button class="tab-btn" id="tabSettingsBtn" onclick="switchDesignTab('settings')">Настройки</button>
+              <button class="tab-btn" id="tabGlitchBtn" onclick="switchDesignTab('glitch')">Glitch-фразы</button>
+            </div>
+
+            <div class="panel-body">
+              <div id="cardsTab">
+                <div class="tool-row">
+                  <button class="btn green small" onclick="newCard()">+ Новая карточка</button>
+                  <button class="btn yellow small" onclick="saveCard()">Сохранить текущую</button>
+                  <button class="btn pink small" onclick="saveSelectedCards()">Сохранить выбранные</button>
+                  <button class="btn red small" onclick="deleteCard()">Удалить</button>
+                </div>
+
+                <div class="bulk-box">
+                  <div class="section-title" style="font-size:15px;">Массовое выделение</div>
+                  <div class="tool-row">
+                    <button class="btn small" onclick="selectAllCards()">Выбрать все</button>
+                    <button class="btn small" onclick="clearSelectedCards()">Снять всё</button>
+                    <button class="btn small" onclick="applyToSelectedPosition(1,0)">→ выбранные</button>
+                    <button class="btn small" onclick="applyToSelectedPosition(-1,0)">← выбранные</button>
+                    <button class="btn small" onclick="applyToSelectedPosition(0,1)">↓ выбранные</button>
+                    <button class="btn small" onclick="applyToSelectedPosition(0,-1)">↑ выбранные</button>
+                  </div>
+                </div>
+
+                <div class="label">Заголовок</div>
+                <input id="cardTitle" class="field" placeholder="Заголовок" />
+
+                <div class="label">Подзаголовок</div>
+                <input id="cardSubtitle" class="field" placeholder="Подзаголовок" />
+
+                <div class="label">Badge / верхний текст</div>
+                <input id="cardBadge" class="field" placeholder="🚔 Police Script" />
+
+                <div class="label">Описание</div>
+                <textarea id="cardDescription" class="textarea" placeholder="Описание карточки"></textarea>
+
+                <div class="label">Пункты списка (каждый с новой строки)</div>
+                <textarea id="cardBullets" class="textarea" placeholder="Пункт 1&#10;Пункт 2&#10;Пункт 3"></textarea>
+
+                <div class="grid2">
+                  <div>
+                    <div class="label">Текст кнопки</div>
+                    <input id="cardButtonText" class="field" placeholder="Подробнее" />
+                  </div>
+                  <div>
+                    <div class="label">Ссылка кнопки</div>
+                    <input id="cardButtonUrl" class="field" placeholder="https://..." />
+                  </div>
+                </div>
+
+                <div class="grid2">
+                  <div>
+                    <div class="label">Эмодзи</div>
+                    <input id="cardEmoji" class="field" placeholder="🚓" />
+                  </div>
+                  <div>
+                    <div class="label">Ссылка на картинку</div>
+                    <input id="cardImageUrl" class="field" placeholder="https://..." />
+                  </div>
+                </div>
+
+                <div class="label">Загрузка картинки файлом</div>
+                <div class="upload-box" onclick="document.getElementById('cardImageFile').click()">
+                  Нажми, чтобы выбрать файл картинки
+                  <img id="cardImagePreview" class="upload-preview hidden" alt="preview" />
+                </div>
+                <input id="cardImageFile" type="file" accept="image/*" class="hidden" />
+
+                <div class="grid3">
+                  <div><div class="label">Ширина</div><input id="cardColSpan" class="field" type="number" min="1" max="12" /></div>
+                  <div><div class="label">Высота</div><input id="cardRowSpan" class="field" type="number" min="1" max="12" /></div>
+                  <div><div class="label">Мин. высота</div><input id="cardMinHeight" class="field" type="number" min="120" /></div>
+                </div>
+
+                <div class="grid3">
+                  <div><div class="label">Позиция X</div><input id="cardPosX" class="field" type="number" min="1" max="12" /></div>
+                  <div><div class="label">Позиция Y</div><input id="cardPosY" class="field" type="number" min="1" /></div>
+                  <div><div class="label">Порядок</div><input id="cardSortOrder" class="field" type="number" min="0" /></div>
+                </div>
+
+                <div class="grid3">
+                  <div><div class="label">Прозрачность</div><input id="cardImageOpacity" class="field" type="number" step="0.01" min="0" max="1" /></div>
+                  <div><div class="label">Размер %</div><input id="cardImageSize" class="field" type="number" min="10" max="100" /></div>
+                  <div><div class="label">Размытие</div><input id="cardImageBlur" class="field" type="number" min="0" max="50" /></div>
+                </div>
+
+                <div class="grid2">
+                  <div>
+                    <div class="label">Позиция картинки</div>
+                    <select id="cardImagePosition" class="select">
+                      <option value="right-bottom">справа снизу</option>
+                      <option value="right-center">справа по центру</option>
+                      <option value="center">по центру</option>
+                      <option value="left-bottom">слева снизу</option>
+                      <option value="left-center">слева по центру</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div class="label">Оттенок</div>
+                    <input id="cardImageTint" class="field" placeholder="#4fdfff" />
+                  </div>
+                </div>
+
+                <div class="grid3">
+                  <div><div class="label">Фон</div><input id="cardBackgroundColor" class="field" placeholder="#101216" /></div>
+                  <div><div class="label">Граница</div><input id="cardBorderColor" class="field" placeholder="#2b3340" /></div>
+                  <div><div class="label">Свечение</div><input id="cardGlowColor" class="field" placeholder="#4fdfff" /></div>
+                </div>
+
+                <div class="grid3">
+                  <div><div class="label">Overlay</div><input id="cardOverlayOpacity" class="field" type="number" step="0.01" min="0" max="1" /></div>
+                  <div>
+                    <div class="label">Выравнивание</div>
+                    <select id="cardContentAlign" class="select">
+                      <option value="left">слева</option>
+                      <option value="center">по центру</option>
+                      <option value="right">справа</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div class="label">Вертикально</div>
+                    <select id="cardVerticalAlign" class="select">
+                      <option value="top">сверху</option>
+                      <option value="center">по центру</option>
+                      <option value="bottom">снизу</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid3">
+                  <div>
+                    <div class="label">Hover-эффект</div>
+                    <select id="cardHoverEffect" class="select">
+                      <option value="lift">подъём</option>
+                      <option value="glow">свечение</option>
+                      <option value="none">без эффекта</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div class="label">Тип размера</div>
+                    <select id="cardSizeType" class="select">
+                      <option value="small">маленькая</option>
+                      <option value="medium">средняя</option>
+                      <option value="large">большая</option>
+                      <option value="wide">широкая</option>
+                      <option value="tall">высокая</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div class="label">Стиль</div>
+                    <input id="cardStyle" class="field" placeholder="default" />
+                  </div>
+                </div>
+
+                <div class="grid2">
+                  <div>
+                    <div class="label">Активна?</div>
+                    <select id="cardIsActive" class="select">
+                      <option value="true">Да</option>
+                      <option value="false">Нет</option>
+                    </select>
+                  </div>
+                  <div>
+                    <div class="label">Избранная?</div>
+                    <select id="cardIsFeatured" class="select">
+                      <option value="false">Нет</option>
+                      <option value="true">Да</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div id="cardSaveMsg" class="status"></div>
+
+                <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:16px 0;">
+                <div class="section-title" style="font-size:16px;">Список карточек</div>
+                <div id="cardsList" class="card-list"></div>
+              </div>
+
+              <div id="settingsTab" class="hidden">
+                <div class="section-title" style="font-size:16px;">Настройки сайта</div>
+                <div class="label">Название сайта</div>
+                <input id="settingSiteTitle" class="field" placeholder="WORLD SCRIPT" />
+                <div class="label">Hero title</div>
+                <input id="settingHeroTitle" class="field" placeholder="Например: Три главных раздела" />
+                <div class="label">Hero accent</div>
+                <input id="settingHeroAccent" class="field" placeholder="Например: в одном интерфейсе" />
+                <div class="label">Описание hero</div>
+                <textarea id="settingHeroDescription" class="textarea"></textarea>
+                <div class="label">Подзаголовок бренда</div>
+                <input id="settingSiteSubtitle" class="field" />
+                <div class="label">Описание для гостя</div>
+                <textarea id="settingGuestDescription" class="textarea"></textarea>
+                <button class="btn green" onclick="saveSettings()">Сохранить настройки</button>
+                <div id="settingsMsg" class="status"></div>
+              </div>
+
+              <div id="glitchTab" class="hidden">
+                <div class="tool-row">
+                  <button class="btn green small" onclick="newPhrase()">+ Новая фраза</button>
+                  <button class="btn yellow small" onclick="savePhrase()">Сохранить</button>
+                  <button class="btn red small" onclick="deletePhrase()">Удалить</button>
+                </div>
+
+                <div class="label">Фраза</div>
+                <textarea id="phraseText" class="textarea"></textarea>
+
+                <div class="grid2">
+                  <div><div class="label">Порядок</div><input id="phraseSortOrder" class="field" type="number" min="0" /></div>
+                  <div>
+                    <div class="label">Активна?</div>
+                    <select id="phraseIsActive" class="select">
+                      <option value="true">Да</option>
+                      <option value="false">Нет</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div id="phraseMsg" class="status"></div>
+                <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:16px 0;">
+                <div class="section-title" style="font-size:16px;">Список фраз</div>
+                <div id="phrasesList" class="card-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel preview-wrap">
+            <div class="preview-head">
+              <div>
+                <div style="font-size:22px;font-weight:900;">Предпросмотр</div>
+                <div class="muted">Ctrl/⌘ + click = мультивыбор</div>
+              </div>
+              <div class="tool-row" style="margin:0;">
+                <button class="btn small" onclick="nudgeCard(-1,0)">←</button>
+                <button class="btn small" onclick="nudgeCard(1,0)">→</button>
+                <button class="btn small" onclick="nudgeCard(0,-1)">↑</button>
+                <button class="btn small" onclick="nudgeCard(0,1)">↓</button>
+                <button class="btn small" onclick="resizeCard(1,0)">+Ш</button>
+                <button class="btn small" onclick="resizeCard(-1,0)">-Ш</button>
+                <button class="btn small" onclick="resizeCard(0,1)">+В</button>
+                <button class="btn small" onclick="resizeCard(0,-1)">-В</button>
+              </div>
+            </div>
+            <div id="previewGrid" class="preview-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= IDEAS ================= -->
+      <div id="ideasSection" class="hidden">
+        <div class="layout">
+          <div class="panel sidebar">
+            <div class="panel-body">
+              <div class="section-title">Предложения PS</div>
+
+              <div class="info-box">
+                <div class="grid2">
+                  <div>
+                    <div class="label">Страница</div>
+                    <input id="ideasPage" class="field" type="number" min="1" value="1" />
+                  </div>
+                  <div>
+                    <div class="label">Статус</div>
+                    <select id="ideasStatusFilter" class="select">
+                      <option value="">Все</option>
+                      <option value="sent">На рассмотрении</option>
+                      <option value="approved">Одобрено</option>
+                      <option value="rejected">Отклонено</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="label">Поиск по нику</div>
+                <input id="ideasNickFilter" class="field" placeholder="Например: Marselle" />
+
+                <button class="btn green" style="width:100%;" onclick="loadIdeas()">Загрузить предложения</button>
+              </div>
+
+              <div id="ideasList" class="simple-list"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="section-title">Редактор предложения</div>
+              <div class="label">ID</div>
+              <input id="ideaId" class="field" readonly />
+              <div class="label">Ник</div>
+              <input id="ideaNick" class="field" readonly />
+              <div class="label">Текст предложения</div>
+              <textarea id="ideaText" class="textarea" readonly></textarea>
+
+              <div class="grid2">
+                <div>
+                  <div class="label">Статус</div>
+                  <select id="ideaStatus" class="select">
+                    <option value="sent">На рассмотрении</option>
+                    <option value="approved">Одобрено</option>
+                    <option value="rejected">Отклонено</option>
+                  </select>
+                </div>
+                <div>
+                  <div class="label">Награда</div>
+                  <input id="ideaRewardText" class="field" placeholder="Например: 50 000$" />
+                </div>
+              </div>
+
+              <div class="label">Комментарий</div>
+              <textarea id="ideaCommentText" class="textarea" placeholder="Комментарий к предложению"></textarea>
+
+              <div class="tool-row">
+                <button class="btn green" onclick="quickIdeaStatus('approved')">Одобрить</button>
+                <button class="btn red" onclick="quickIdeaStatus('rejected')">Отклонить</button>
+                <button class="btn yellow" onclick="quickIdeaStatus('sent')">Вернуть на рассмотрение</button>
+                <button class="btn pink" onclick="saveIdea()">Сохранить вручную</button>
+              </div>
+              <div id="ideaMsg" class="status"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= BUGS ================= -->
+      <div id="bugsSection" class="hidden">
+        <div class="layout">
+          <div class="panel sidebar">
+            <div class="panel-body">
+              <div class="section-title">Баги / недочёты PS</div>
+
+              <div class="info-box">
+                <div class="grid2">
+                  <div>
+                    <div class="label">Страница</div>
+                    <input id="bugsPage" class="field" type="number" min="1" value="1" />
+                  </div>
+                  <div>
+                    <div class="label">Статус</div>
+                    <select id="bugsStatusFilter" class="select">
+                      <option value="">Все</option>
+                      <option value="in_progress">В работе</option>
+                      <option value="solved">Исправлено</option>
+                      <option value="rejected">Отклонено</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="label">Поиск по нику</div>
+                <input id="bugsNickFilter" class="field" placeholder="Например: Marselle" />
+
+                <button class="btn green" style="width:100%;" onclick="loadBugs()">Загрузить баги</button>
+              </div>
+
+              <div id="bugsList" class="simple-list"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="section-title">Редактор бага</div>
+              <div class="label">ID</div>
+              <input id="bugId" class="field" readonly />
+              <div class="label">Ник</div>
+              <input id="bugNick" class="field" readonly />
+              <div class="label">Описание бага</div>
+              <textarea id="bugText" class="textarea" readonly></textarea>
+
+              <div class="label">Статус</div>
+              <select id="bugStatus" class="select">
+                <option value="in_progress">В работе</option>
+                <option value="solved">Исправлено</option>
+                <option value="rejected">Отклонено</option>
+              </select>
+
+              <div class="label">Комментарий</div>
+              <textarea id="bugCommentText" class="textarea" placeholder="Комментарий к багу"></textarea>
+
+              <div class="tool-row">
+                <button class="btn green" onclick="quickBugStatus('solved')">Отметить исправленным</button>
+                <button class="btn red" onclick="quickBugStatus('rejected')">Отклонить</button>
+                <button class="btn yellow" onclick="quickBugStatus('in_progress')">Вернуть в работу</button>
+                <button class="btn pink" onclick="saveBug()">Сохранить вручную</button>
+              </div>
+              <div id="bugMsg" class="status"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= FINANCE ================= -->
+      <div id="financeSection" class="hidden">
+        <div class="layout">
+          <div class="panel sidebar">
+            <div class="panel-body">
+              <div class="section-title">Финансы WS</div>
+
+              <div class="label">Поиск игрока</div>
+              <input id="financeQuerySearch" class="field" placeholder="Логин, никнейм или game_nick" />
+              <button class="btn green" style="width:100%;" onclick="loadFinancePlayers()">Загрузить игроков</button>
+
+              <div id="financePlayersList" class="simple-list"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="section-title">Изменение финансов</div>
+
+              <div id="financeInfoBox" class="info-box hidden">
+                <div><b>ID:</b> <span id="financePlayerId">—</span></div>
+                <div style="margin-top:6px;"><b>Логин:</b> <span id="financeLoginLabel">—</span></div>
+                <div style="margin-top:6px;"><b>Никнейм:</b> <span id="financeNicknameLabel">—</span></div>
+                <div style="margin-top:6px;"><b>Игровой ник:</b> <span id="financeGameNickLabel">—</span></div>
+                <div style="margin-top:6px;"><b>Игровой баланс:</b> <span id="financeGameBalance">0</span></div>
+                <div style="margin-top:6px;"><b>Доступно к выводу:</b> <span id="financeToOutput">0</span></div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <div class="label">Изменить игровой баланс (delta)</div>
+                  <input id="financeGameBalanceDelta" class="field" type="number" placeholder="Например: 5000 или -1000" />
+                  <button class="btn green" onclick="adjustFinance('game_balance')">Применить к игровому балансу</button>
+                </div>
+
+                <div>
+                  <div class="label">Изменить доступно к выводу (delta)</div>
+                  <input id="financeToOutputDelta" class="field" type="number" placeholder="Например: 5000 или -1000" />
+                  <button class="btn yellow" onclick="adjustFinance('to_output')">Применить к выводу</button>
+                </div>
+              </div>
+
+              <div id="financeMsg" class="status"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= OBJECTS ================= -->
+      <div id="objectsSection" class="hidden">
+        <div class="layout">
+          <div class="panel sidebar">
+            <div class="panel-body">
+              <div class="section-title">Предметы магазина</div>
+
+              <div class="tool-row">
+                <button class="btn green small" onclick="newObject()">+ Новый предмет</button>
+                <button class="btn yellow small" onclick="saveObject()">Сохранить</button>
+                <button class="btn red small" onclick="deleteObject()">Удалить</button>
+              </div>
+
+              <div class="label">Название</div>
+              <input id="objectTitle" class="field" placeholder="Например: Кристалл скрипта" />
+
+              <div class="grid2">
+                <div>
+                  <div class="label">Цена</div>
+                  <input id="objectPrice" class="field" type="number" min="0" placeholder="5000" />
+                </div>
+                <div>
+                  <div class="label">Редкость</div>
+                  <input id="objectRarity" class="field" placeholder="Эпический" />
+                </div>
+              </div>
+
+              <div class="label">Ссылка на картинку</div>
+              <input id="objectImageUrl" class="field" placeholder="https://..." />
+
+              <div class="label">Загрузка картинки</div>
+              <div class="upload-box" onclick="document.getElementById('objectImageFile').click()">
+                Нажми, чтобы выбрать картинку предмета
+                <img id="objectImagePreview" class="upload-preview hidden" alt="object preview" />
+              </div>
+              <input id="objectImageFile" type="file" accept="image/*" class="hidden" />
+
+              <div class="label">Активен?</div>
+              <select id="objectIsActive" class="select">
+                <option value="true">Да</option>
+                <option value="false">Нет</option>
+              </select>
+
+              <div id="objectMsg" class="status"></div>
+
+              <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:16px 0;">
+              <div class="section-title" style="font-size:16px;">Список предметов</div>
+              <div id="objectsList" class="card-list"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="section-title">Предпросмотр предмета</div>
+              <div id="objectPreviewBox" class="info-box">
+                <div class="row-flex">
+                  <div id="objectPreviewThumb" class="object-thumb">📦</div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:24px;font-weight:900;margin-bottom:6px;" id="objectPreviewTitle">Название предмета</div>
+                    <div class="muted" style="margin-bottom:10px;" id="objectPreviewRarity">Обычный</div>
+                    <div style="font-size:18px;font-weight:900;color:#ffe08a;" id="objectPreviewPrice">$0</div>
+                    <div style="margin-top:12px;" id="objectPreviewActiveWrap">
+                      <span class="chip yellow">Черновик</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-box">
+                <div class="section-title" style="font-size:16px;">Подсказка</div>
+                <div class="muted" style="line-height:1.7;">
+                  Здесь ты управляешь товарами магазина World Script.  
+                  Эти предметы потом используются:
+                  <br>• в магазине
+                  <br>• в инвентаре пользователей
+                  <br>• как item-призы рулетки
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= ROULETTE ================= -->
+      <div id="rouletteSection" class="hidden">
+        <div class="layout">
+          <div class="panel sidebar">
+            <div class="panel-body">
+              <div class="section-title">Призы рулетки</div>
+
+              <div class="tool-row">
+                <button class="btn green small" onclick="newRoulettePrize()">+ Новый приз</button>
+                <button class="btn yellow small" onclick="saveRoulettePrize()">Сохранить</button>
+                <button class="btn red small" onclick="deleteRoulettePrize()">Удалить</button>
+              </div>
+
+              <div class="label">Название приза</div>
+              <input id="rouletteTitle" class="field" placeholder="Например: $5000 или Кристалл скрипта" />
+
+              <div class="grid2">
+                <div>
+                  <div class="label">Тип приза</div>
+                  <select id="rouletteType" class="select" onchange="toggleRoulettePrizeFields()">
+                    <option value="money">Деньги</option>
+                    <option value="item">Предмет</option>
+                  </select>
+                </div>
+                <div>
+                  <div class="label">Значение</div>
+                  <input id="rouletteValue" class="field" type="number" min="0" placeholder="5000 или 1" />
+                </div>
+              </div>
+
+              <div id="rouletteObjectWrap" class="hidden">
+                <div class="label">ID предмета (object_id)</div>
+                <input id="rouletteObjectId" class="field" type="number" min="1" placeholder="Например: 3" />
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <div class="label">Шанс (probability)</div>
+                  <input id="rouletteProbability" class="field" type="number" min="1" placeholder="1" />
+                </div>
+                <div>
+                  <div class="label">Порядок</div>
+                  <input id="rouletteSortOrder" class="field" type="number" min="0" placeholder="0" />
+                </div>
+              </div>
+
+              <div class="grid2">
+                <div>
+                  <div class="label">Иконка</div>
+                  <input id="rouletteIcon" class="field" placeholder="🎁" />
+                </div>
+                <div>
+                  <div class="label">Активен?</div>
+                  <select id="rouletteIsActive" class="select">
+                    <option value="true">Да</option>
+                    <option value="false">Нет</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="label">Ссылка на картинку</div>
+              <input id="rouletteImageUrl" class="field" placeholder="https://..." />
+
+              <div class="label">Загрузка картинки</div>
+              <div class="upload-box" onclick="document.getElementById('rouletteImageFile').click()">
+                Нажми, чтобы выбрать картинку приза
+                <img id="rouletteImagePreview" class="upload-preview hidden" alt="roulette preview" />
+              </div>
+              <input id="rouletteImageFile" type="file" accept="image/*" class="hidden" />
+
+              <div id="rouletteMsg" class="status"></div>
+
+              <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:16px 0;">
+              <div class="section-title" style="font-size:16px;">Список призов</div>
+              <div id="roulettePrizesList" class="card-list"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="section-title">Предпросмотр приза</div>
+              <div id="roulettePreviewBox" class="info-box">
+                <div class="row-flex">
+                  <div id="roulettePreviewThumb" class="prize-thumb">🎁</div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:24px;font-weight:900;margin-bottom:6px;" id="roulettePreviewTitle">Название приза</div>
+                    <div class="muted" style="margin-bottom:10px;" id="roulettePreviewMeta">Денежный приз</div>
+                    <div class="tool-row" style="margin-bottom:0;">
+                      <span class="chip cyan" id="roulettePreviewTypeChip">money</span>
+                      <span class="chip yellow" id="roulettePreviewValueChip">value: 0</span>
+                      <span class="chip" id="roulettePreviewProbChip">chance: 1</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-box">
+                <div class="section-title" style="font-size:16px;">Подсказка</div>
+                <div class="muted" style="line-height:1.7;">
+                  • <b>money</b> — начисляется в <b>to_output</b>
+                  <br>• <b>item</b> — выдаёт предмет из <b>ws_object</b> по <b>object_id</b>
+                  <br>• <b>value</b> — сумма денег или количество предмета
+                  <br>• <b>probability</b> — вес шанса выпадения
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "https://world-script-api.onrender.com";
+    const TOKEN_KEY = "ws_token";
+
+    let currentUser = null;
+    let currentMainSection = "design";
+
+    let cards = [];
+    let settingsMap = {};
+    let phrases = [];
+    let currentCardId = null;
+    let currentPhraseId = null;
+    let selectedCardIds = new Set();
+    let uploadedImageBase64 = "";
+
+    let ideas = [];
+    let currentIdeaId = null;
+
+    let bugs = [];
+    let currentBugId = null;
+
+    let financePlayers = [];
+    let currentFinanceRow = null;
+
+    let objects = [];
+    let currentObjectId = null;
+    let uploadedObjectImageBase64 = "";
+
+    let roulettePrizes = [];
+    let currentRoulettePrizeId = null;
+    let uploadedRouletteImageBase64 = "";
+
+    function token(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+
+    async function apiGet(url, auth = true, extraHeaders = {}) {
+      const headers = { "Accept": "application/json", ...extraHeaders };
+      if (auth && token()) headers.Authorization = "Bearer " + token();
+
+      const res = await fetch(API_BASE + url, { headers });
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { throw new Error("Сервер вернул не JSON: " + text.slice(0, 120)); }
+      return { res, data };
+    }
+
+    async function apiPost(url, body = {}, auth = true, extraHeaders = {}) {
+      const headers = {
+        "Content-Type":"application/json",
+        "Accept":"application/json",
+        ...extraHeaders
+      };
+      if (auth && token()) headers.Authorization = "Bearer " + token();
+
+      const res = await fetch(API_BASE + url, {
+        method:"POST",
+        headers,
+        body: JSON.stringify(body)
+      });
+
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); } catch { throw new Error("Сервер вернул не JSON: " + text.slice(0, 120)); }
+      return { res, data };
+    }
+
+    function showLogin() {
+      document.getElementById("loginView").classList.remove("hidden");
+      document.getElementById("adminView").classList.add("hidden");
+    }
+
+    function showAdmin() {
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("adminView").classList.remove("hidden");
+    }
+
+    async function adminLogin() {
+      const login = document.getElementById("loginLogin").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const msg = document.getElementById("loginMsg");
+      msg.textContent = "";
+
+      try {
+        const { data } = await apiPost("/api/ws/login", { login, password }, false);
+        if (!data.ok) {
+          msg.textContent = data.error || "Ошибка входа";
+          return;
+        }
+
+        localStorage.setItem(TOKEN_KEY, data.token);
+        await loadMe();
+        await loadCurrentSection();
+      } catch (e) {
+        msg.textContent = e.message;
+      }
+    }
+
+    function adminLogout() {
+      localStorage.removeItem(TOKEN_KEY);
+      currentUser = null;
+      showLogin();
+    }
+
+    async function loadMe() {
+      const { data } = await apiGet("/api/ws/me", true);
+      if (!data.ok) throw new Error(data.error || "Не удалось загрузить пользователя");
+      currentUser = data.user;
+
+      if (String(currentUser.role || "").toLowerCase() !== "admin") {
+        throw new Error("Требуется admin");
+      }
+
+      document.getElementById("adminUserText").textContent =
+        `${currentUser.nickname || currentUser.login} · ${currentUser.role}`;
+      showAdmin();
+    }
+
+    function switchMainSection(name) {
+      currentMainSection = name;
+
+      document.getElementById("designSection").classList.toggle("hidden", name !== "design");
+      document.getElementById("ideasSection").classList.toggle("hidden", name !== "ideas");
+      document.getElementById("bugsSection").classList.toggle("hidden", name !== "bugs");
+      document.getElementById("financeSection").classList.toggle("hidden", name !== "finance");
+      document.getElementById("objectsSection").classList.toggle("hidden", name !== "objects");
+      document.getElementById("rouletteSection").classList.toggle("hidden", name !== "roulette");
+
+      document.getElementById("mainSectionDesignBtn").classList.toggle("active", name === "design");
+      document.getElementById("mainSectionIdeasBtn").classList.toggle("active", name === "ideas");
+      document.getElementById("mainSectionBugsBtn").classList.toggle("active", name === "bugs");
+      document.getElementById("mainSectionFinanceBtn").classList.toggle("active", name === "finance");
+      document.getElementById("mainSectionObjectsBtn").classList.toggle("active", name === "objects");
+      document.getElementById("mainSectionRouletteBtn").classList.toggle("active", name === "roulette");
+
+      document.getElementById("saveSelectedBtn").classList.toggle("hidden", name !== "design");
+
+      loadCurrentSection();
+    }
+
+    async function loadCurrentSection() {
+      if (currentMainSection === "design") {
+        await Promise.all([loadCards(), loadSettings(), loadPhrases()]);
+      } else if (currentMainSection === "ideas") {
+        await loadIdeas();
+      } else if (currentMainSection === "bugs") {
+        await loadBugs();
+      } else if (currentMainSection === "objects") {
+        await loadObjects();
+      } else if (currentMainSection === "roulette") {
+        await Promise.all([loadRoulettePrizesAdmin(), loadObjectsForRouletteHint()]);
+      }
+    }
+
+    function switchDesignTab(name) {
+      document.getElementById("cardsTab").classList.toggle("hidden", name !== "cards");
+      document.getElementById("settingsTab").classList.toggle("hidden", name !== "settings");
+      document.getElementById("glitchTab").classList.toggle("hidden", name !== "glitch");
+
+      document.getElementById("tabCardsBtn").classList.toggle("active", name === "cards");
+      document.getElementById("tabSettingsBtn").classList.toggle("active", name === "settings");
+      document.getElementById("tabGlitchBtn").classList.toggle("active", name === "glitch");
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function badgeHtml(type, value) {
+      return `<span class="badge ${type}-${String(value).replace(/\s+/g, "_")}">${escapeHtml(value)}</span>`;
+    }
+
+    function clamp(n, min, max) {
+      return Math.min(max, Math.max(min, n));
+    }
+
+    function hexToRgba(hex, alpha = 1) {
+      const h = String(hex || "").replace("#", "").trim();
+      if (!/^[0-9a-fA-F]{6}$/.test(h)) return `rgba(99,221,255,${alpha})`;
+      const r = parseInt(h.slice(0, 2), 16);
+      const g = parseInt(h.slice(2, 4), 16);
+      const b = parseInt(h.slice(4, 6), 16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    function showStatus(id, text, type = "") {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.className = "status" + (type ? " " + type : "");
+      el.textContent = text || "";
+    }
+
+    // ================= DESIGN =================
+
+    async function loadCards() {
+      const { data } = await apiGet("/api/ws/admin/cards", true);
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки карточек");
+      cards = Array.isArray(data.items) ? data.items : [];
+      renderCardsList();
+      renderPreview();
+
+      if (!currentCardId && cards.length) {
+        selectCard(cards[0].id);
+      }
+    }
+
+    async function loadSettings() {
+      const { data } = await apiGet("/api/ws/settings", false);
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки настроек");
+      settingsMap = data.settings || {};
+      document.getElementById("settingSiteTitle").value = settingsMap.site_title || "";
+      document.getElementById("settingHeroTitle").value = settingsMap.hero_title || "";
+      document.getElementById("settingHeroAccent").value = settingsMap.hero_accent || "";
+      document.getElementById("settingHeroDescription").value = settingsMap.hero_description || "";
+      document.getElementById("settingSiteSubtitle").value = settingsMap.site_subtitle || "";
+      document.getElementById("settingGuestDescription").value = settingsMap.guest_description || "";
+    }
+
+    async function loadPhrases() {
+      const { data } = await apiGet("/api/ws/glitch-phrases", false);
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки фраз");
+      phrases = Array.isArray(data.items) ? data.items : [];
+      renderPhrasesList();
+
+      if (!currentPhraseId && phrases.length) {
+        selectPhrase(phrases[0].id);
+      }
+    }
+
+    function currentCard() {
+      return cards.find(x => x.id === currentCardId) || null;
+    }
+
+    function renderCardsList() {
+      const wrap = document.getElementById("cardsList");
+      wrap.innerHTML = "";
+
+      cards.forEach(card => {
+        const checked = selectedCardIds.has(card.id);
+        const el = document.createElement("div");
+        el.className = "mini-card" + (card.id === currentCardId ? " active" : "");
+        el.innerHTML = `
+          <input class="mini-card-check" type="checkbox" ${checked ? "checked" : ""} />
+          <div class="mini-card-content">
+            <div class="mini-card-title">${escapeHtml(card.title || "Без названия")}</div>
+            <div class="mini-card-meta">
+              id: ${card.id} · ${card.grid_col_span}x${card.grid_row_span} · pos ${card.pos_x || 1}:${card.pos_y || 1}
+            </div>
+          </div>
+        `;
+
+        const checkbox = el.querySelector("input");
+        checkbox.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleCardSelection(card.id);
+        });
+
+        el.onclick = (e) => {
+          if (e.ctrlKey || e.metaKey) toggleCardSelection(card.id);
+          else selectCard(card.id);
+        };
+
+        wrap.appendChild(el);
+      });
+    }
+
+    function toggleCardSelection(id) {
+      if (selectedCardIds.has(id)) selectedCardIds.delete(id);
+      else selectedCardIds.add(id);
+      renderCardsList();
+      renderPreview();
+    }
+
+    function selectAllCards() {
+      selectedCardIds = new Set(cards.map(c => c.id));
+      renderCardsList();
+      renderPreview();
+    }
+
+    function clearSelectedCards() {
+      selectedCardIds.clear();
+      renderCardsList();
+      renderPreview();
+    }
+
+    function selectCard(id) {
+      currentCardId = id;
+      const c = currentCard();
+      if (!c) return;
+
+      document.getElementById("cardTitle").value = c.title || "";
+      document.getElementById("cardSubtitle").value = c.subtitle || "";
+      document.getElementById("cardBadge").value = c.badge || "";
+      document.getElementById("cardDescription").value = c.description || "";
+      document.getElementById("cardBullets").value = Array.isArray(c.bullet_points) ? c.bullet_points.join("\n") : "";
+      document.getElementById("cardButtonText").value = c.button_text || "";
+      document.getElementById("cardButtonUrl").value = c.button_url || "";
+      document.getElementById("cardEmoji").value = c.emoji || "";
+      document.getElementById("cardImageUrl").value = c.image_url || "";
+
+      document.getElementById("cardColSpan").value = c.grid_col_span ?? 4;
+      document.getElementById("cardRowSpan").value = c.grid_row_span ?? 4;
+      document.getElementById("cardMinHeight").value = c.min_height ?? 320;
+      document.getElementById("cardPosX").value = c.pos_x ?? 1;
+      document.getElementById("cardPosY").value = c.pos_y ?? 1;
+      document.getElementById("cardSortOrder").value = c.sort_order ?? 0;
+
+      document.getElementById("cardImageOpacity").value = c.image_opacity ?? 0.18;
+      document.getElementById("cardImageSize").value = c.image_size ?? 42;
+      document.getElementById("cardImageBlur").value = c.image_blur ?? 0;
+      document.getElementById("cardImagePosition").value = c.image_position || "right-bottom";
+      document.getElementById("cardImageTint").value = c.image_tint || "";
+
+      document.getElementById("cardBackgroundColor").value = c.background_color || "";
+      document.getElementById("cardBorderColor").value = c.border_color || "";
+      document.getElementById("cardGlowColor").value = c.glow_color || "";
+      document.getElementById("cardOverlayOpacity").value = c.overlay_opacity ?? 0;
+
+      document.getElementById("cardContentAlign").value = c.content_align || "left";
+      document.getElementById("cardVerticalAlign").value = c.vertical_align || "top";
+      document.getElementById("cardHoverEffect").value = c.hover_effect || "lift";
+      document.getElementById("cardSizeType").value = c.size_type || "medium";
+      document.getElementById("cardStyle").value = c.card_style || "default";
+      document.getElementById("cardIsActive").value = String(c.is_active !== false);
+      document.getElementById("cardIsFeatured").value = String(!!c.is_featured);
+
+      uploadedImageBase64 = "";
+      document.getElementById("cardImagePreview").classList.add("hidden");
+
+      renderCardsList();
+      renderPreview();
+    }
+
+    function newCard() {
+      currentCardId = null;
+      document.getElementById("cardTitle").value = "";
+      document.getElementById("cardSubtitle").value = "";
+      document.getElementById("cardBadge").value = "";
+      document.getElementById("cardDescription").value = "";
+      document.getElementById("cardBullets").value = "";
+      document.getElementById("cardButtonText").value = "";
+      document.getElementById("cardButtonUrl").value = "";
+      document.getElementById("cardEmoji").value = "🚓";
+      document.getElementById("cardImageUrl").value = "";
+      document.getElementById("cardColSpan").value = 6;
+      document.getElementById("cardRowSpan").value = 5;
+      document.getElementById("cardMinHeight").value = 320;
+      document.getElementById("cardPosX").value = 1;
+      document.getElementById("cardPosY").value = 1;
+      document.getElementById("cardSortOrder").value = cards.length + 1;
+      document.getElementById("cardImageOpacity").value = 0.18;
+      document.getElementById("cardImageSize").value = 42;
+      document.getElementById("cardImageBlur").value = 0;
+      document.getElementById("cardImagePosition").value = "right-bottom";
+      document.getElementById("cardImageTint").value = "";
+      document.getElementById("cardBackgroundColor").value = "";
+      document.getElementById("cardBorderColor").value = "";
+      document.getElementById("cardGlowColor").value = "";
+      document.getElementById("cardOverlayOpacity").value = 0;
+      document.getElementById("cardContentAlign").value = "left";
+      document.getElementById("cardVerticalAlign").value = "top";
+      document.getElementById("cardHoverEffect").value = "lift";
+      document.getElementById("cardSizeType").value = "medium";
+      document.getElementById("cardStyle").value = "default";
+      document.getElementById("cardIsActive").value = "true";
+      document.getElementById("cardIsFeatured").value = "false";
+
+      uploadedImageBase64 = "";
+      document.getElementById("cardImagePreview").classList.add("hidden");
+      renderCardsList();
+      renderPreview();
+    }
+
+    function collectCardPayload() {
+      return {
+        title: document.getElementById("cardTitle").value.trim(),
+        subtitle: document.getElementById("cardSubtitle").value.trim(),
+        badge: document.getElementById("cardBadge").value.trim(),
+        description: document.getElementById("cardDescription").value.trim(),
+        bullet_points: document.getElementById("cardBullets").value.split("\n").map(x => x.trim()).filter(Boolean),
+        button_text: document.getElementById("cardButtonText").value.trim(),
+        button_url: document.getElementById("cardButtonUrl").value.trim(),
+        emoji: document.getElementById("cardEmoji").value.trim(),
+        image_url: document.getElementById("cardImageUrl").value.trim(),
+
+        grid_col_span: Number(document.getElementById("cardColSpan").value || 4),
+        grid_row_span: Number(document.getElementById("cardRowSpan").value || 4),
+        min_height: Number(document.getElementById("cardMinHeight").value || 320),
+        pos_x: Number(document.getElementById("cardPosX").value || 1),
+        pos_y: Number(document.getElementById("cardPosY").value || 1),
+        sort_order: Number(document.getElementById("cardSortOrder").value || 0),
+
+        image_opacity: Number(document.getElementById("cardImageOpacity").value || 0.18),
+        image_size: Number(document.getElementById("cardImageSize").value || 42),
+        image_blur: Number(document.getElementById("cardImageBlur").value || 0),
+        image_position: document.getElementById("cardImagePosition").value,
+        image_tint: document.getElementById("cardImageTint").value.trim(),
+
+        background_color: document.getElementById("cardBackgroundColor").value.trim(),
+        border_color: document.getElementById("cardBorderColor").value.trim(),
+        glow_color: document.getElementById("cardGlowColor").value.trim(),
+        overlay_opacity: Number(document.getElementById("cardOverlayOpacity").value || 0),
+
+        content_align: document.getElementById("cardContentAlign").value,
+        vertical_align: document.getElementById("cardVerticalAlign").value,
+        hover_effect: document.getElementById("cardHoverEffect").value,
+        size_type: document.getElementById("cardSizeType").value,
+        card_style: document.getElementById("cardStyle").value.trim() || "default",
+
+        is_active: document.getElementById("cardIsActive").value === "true",
+        is_featured: document.getElementById("cardIsFeatured").value === "true"
+      };
+    }
+
+    async function uploadCurrentCardImageIfNeeded(payload) {
+      if (!uploadedImageBase64) return payload;
+
+      const { data } = await apiPost("/api/ws/admin/upload-image", {
+        image_base64: uploadedImageBase64
+      }, true);
+
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки картинки");
+
+      payload.image_url = data.image_url || "";
+      document.getElementById("cardImageUrl").value = payload.image_url;
+      uploadedImageBase64 = "";
+      return payload;
+    }
+
+    async function saveCard() {
+      showStatus("cardSaveMsg", "", "");
+      try {
+        let payload = collectCardPayload();
+        payload = await uploadCurrentCardImageIfNeeded(payload);
+
+        let data;
+        if (currentCardId) {
+          ({ data } = await apiPost("/api/ws/admin/cards/update", {
+            card_id: currentCardId,
+            ...payload
+          }, true));
+        } else {
+          ({ data } = await apiPost("/api/ws/admin/cards/create", payload, true));
+        }
+
+        if (!data.ok) {
+          showStatus("cardSaveMsg", data.error || "Ошибка сохранения", "error");
+          return;
+        }
+
+        showStatus("cardSaveMsg", "Сохранено", "success");
+        await loadCards();
+
+        if (data.item?.id) {
+          currentCardId = data.item.id;
+          selectCard(currentCardId);
+        }
+      } catch (e) {
+        showStatus("cardSaveMsg", e.message, "error");
+      }
+    }
+
+    async function saveSelectedCards() {
+      showStatus("cardSaveMsg", "", "");
+
+      if (!selectedCardIds.size) {
+        showStatus("cardSaveMsg", "Сначала выдели карточки", "error");
+        return;
+      }
+
+      try {
+        const items = [];
+
+        for (const id of selectedCardIds) {
+          const card = cards.find(c => c.id === id);
+          if (!card) continue;
+
+          items.push({
+            card_id: id,
+            title: card.title || "",
+            subtitle: card.subtitle || "",
+            badge: card.badge || "",
+            description: card.description || "",
+            bullet_points: Array.isArray(card.bullet_points) ? card.bullet_points : [],
+            button_text: card.button_text || "",
+            button_url: card.button_url || "",
+            emoji: card.emoji || "",
+            image_url: card.image_url || "",
+            grid_col_span: Number(card.grid_col_span || 4),
+            grid_row_span: Number(card.grid_row_span || 4),
+            min_height: Number(card.min_height || 320),
+            pos_x: Number(card.pos_x || 1),
+            pos_y: Number(card.pos_y || 1),
+            sort_order: Number(card.sort_order || 0),
+            image_opacity: Number(card.image_opacity ?? 0.18),
+            image_size: Number(card.image_size || 42),
+            image_blur: Number(card.image_blur || 0),
+            image_position: card.image_position || "right-bottom",
+            image_tint: card.image_tint || "",
+            background_color: card.background_color || "",
+            border_color: card.border_color || "",
+            glow_color: card.glow_color || "",
+            overlay_opacity: Number(card.overlay_opacity || 0),
+            content_align: card.content_align || "left",
+            vertical_align: card.vertical_align || "top",
+            hover_effect: card.hover_effect || "lift",
+            size_type: card.size_type || "medium",
+            card_style: card.card_style || "default",
+            is_active: card.is_active !== false,
+            is_featured: !!card.is_featured
+          });
+        }
+
+        const { data } = await apiPost("/api/ws/admin/cards/bulk-update", { items }, true);
+
+        if (!data.ok) {
+          showStatus("cardSaveMsg", data.error || "Ошибка массового сохранения", "error");
+          return;
+        }
+
+        showStatus("cardSaveMsg", `Сохранено карточек: ${items.length}`, "success");
+        await loadCards();
+      } catch (e) {
+        showStatus("cardSaveMsg", e.message, "error");
+      }
+    }
+
+    async function deleteCard() {
+      showStatus("cardSaveMsg", "", "");
+
+      if (!currentCardId) {
+        showStatus("cardSaveMsg", "Сначала выбери карточку", "error");
+        return;
+      }
+
+      if (!confirm("Удалить карточку?")) return;
+
+      try {
+        const { data } = await apiPost("/api/ws/admin/cards/delete", { card_id: currentCardId }, true);
+
+        if (!data.ok) {
+          showStatus("cardSaveMsg", data.error || "Ошибка удаления", "error");
+          return;
+        }
+
+        showStatus("cardSaveMsg", "Удалено", "success");
+        selectedCardIds.delete(currentCardId);
+        currentCardId = null;
+        await loadCards();
+        if (cards.length) selectCard(cards[0].id);
+        else newCard();
+      } catch (e) {
+        showStatus("cardSaveMsg", e.message, "error");
+      }
+    }
+
+    function renderPreview() {
+      const grid = document.getElementById("previewGrid");
+      grid.innerHTML = "";
+
+      const sorted = [...cards].sort((a, b) => {
+        const ay = Number(a.pos_y || 1);
+        const by = Number(b.pos_y || 1);
+        if (ay !== by) return ay - by;
+
+        const ax = Number(a.pos_x || 1);
+        const bx = Number(b.pos_x || 1);
+        if (ax !== bx) return ax - bx;
+
+        return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+      });
+
+      sorted.forEach(card => {
+        const el = document.createElement("div");
+        el.className =
+          "preview-card" +
+          (card.id === currentCardId ? " active" : "") +
+          (selectedCardIds.has(card.id) ? " multi" : "");
+
+        const colSpan = clamp(Number(card.grid_col_span || 4), 1, 12);
+        const rowSpan = clamp(Number(card.grid_row_span || 4), 1, 12);
+        const posX = clamp(Number(card.pos_x || 1), 1, 12);
+        const posY = Math.max(1, Number(card.pos_y || 1));
+        const minHeight = Math.max(120, Number(card.min_height || 320));
+
+        el.style.gridColumn = `${posX} / span ${colSpan}`;
+        el.style.gridRow = `${posY} / span ${rowSpan}`;
+        el.style.minHeight = minHeight + "px";
+
+        if (card.background_color) el.style.background = card.background_color;
+        if (card.border_color) el.style.borderColor = card.border_color;
+        if (card.glow_color) el.style.boxShadow = `0 24px 70px ${hexToRgba(card.glow_color, 0.18)}`;
+
+        const align = card.content_align || "left";
+        const vAlign = card.vertical_align || "top";
+        el.style.textAlign = align;
+        el.style.justifyContent =
+          vAlign === "center" ? "center" :
+          vAlign === "bottom" ? "flex-end" : "flex-start";
+
+        const bullets = Array.isArray(card.bullet_points) ? card.bullet_points : [];
+
+        el.innerHTML = `
+          <div class="preview-top">${escapeHtml(card.badge || card.subtitle || "Модуль")}</div>
+          <h3 style="${align === 'center' ? 'margin-left:auto;margin-right:auto;' : align === 'right' ? 'margin-left:auto;' : ''}">
+            ${escapeHtml(card.title || "")}
+          </h3>
+          <p style="${align === 'center' ? 'margin-left:auto;margin-right:auto;' : align === 'right' ? 'margin-left:auto;' : ''}">
+            ${escapeHtml(card.description || "")}
+          </p>
+          ${bullets.length ? `<ul style="${align === 'center' ? 'margin-left:auto;margin-right:auto;' : align === 'right' ? 'margin-left:auto;' : ''}">${bullets.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
+          ${renderPreviewMedia(card)}
+          ${Number(card.overlay_opacity || 0) > 0 ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,${Number(card.overlay_opacity || 0)});z-index:0;"></div>` : ""}
+        `;
+
+        el.onclick = (e) => {
+          if (e.ctrlKey || e.metaKey) toggleCardSelection(card.id);
+          else selectCard(card.id);
+        };
+
+        grid.appendChild(el);
+      });
+    }
+
+    function renderPreviewMedia(card) {
+      const imageUrl = String(card.image_url || "").trim();
+      const emoji = String(card.emoji || "").trim();
+      const opacity = clamp(Number(card.image_opacity ?? 0.18), 0, 1);
+      const size = clamp(Number(card.image_size || 42), 10, 100);
+      const blur = clamp(Number(card.image_blur || 0), 0, 50);
+      const pos = String(card.image_position || "right-bottom");
+      const tint = String(card.image_tint || "").trim();
+
+      let style = `opacity:${opacity};width:${size}%;filter:blur(${blur}px);`;
+      if (pos === "right-bottom") style += "right:0;bottom:0;max-height:88%;";
+      if (pos === "right-center") style += "right:0;top:50%;transform:translateY(-50%);max-height:86%;";
+      if (pos === "center") style += "left:50%;top:50%;transform:translate(-50%,-50%);max-height:86%;";
+      if (pos === "left-bottom") style += "left:0;bottom:0;max-height:88%;";
+      if (pos === "left-center") style += "left:0;top:50%;transform:translateY(-50%);max-height:86%;";
+
+      if (imageUrl) {
+        return `
+          <img class="preview-image" src="${escapeHtml(imageUrl)}" style="${style}">
+          ${tint ? `<div style="position:absolute;inset:0;background:${tint};mix-blend-mode:screen;opacity:${Math.min(opacity, 0.25)};pointer-events:none;"></div>` : ""}
+        `;
+      }
+
+      if (emoji) {
+        return `<div class="preview-emoji" style="opacity:${Math.max(opacity, 0.08)};font-size:${Math.max(60, size * 2.2)}px;">${emoji}</div>`;
+      }
+
+      return "";
+    }
+
+    function nudgeCard(dx, dy) {
+      if (selectedCardIds.size) {
+        selectedCardIds.forEach(id => {
+          const c = cards.find(x => x.id === id);
+          if (!c) return;
+          c.pos_x = clamp(Number(c.pos_x || 1) + dx, 1, 12);
+          c.pos_y = Math.max(1, Number(c.pos_y || 1) + dy);
+        });
+        renderCardsList();
+        renderPreview();
+        return;
+      }
+
+      const c = currentCard();
+      if (!c) return;
+
+      document.getElementById("cardPosX").value = clamp(Number(document.getElementById("cardPosX").value || 1) + dx, 1, 12);
+      document.getElementById("cardPosY").value = Math.max(1, Number(document.getElementById("cardPosY").value || 1) + dy);
+      liveApplyFormToPreview();
+    }
+
+    function resizeCard(dw, dh) {
+      if (selectedCardIds.size) {
+        selectedCardIds.forEach(id => {
+          const c = cards.find(x => x.id === id);
+          if (!c) return;
+          c.grid_col_span = clamp(Number(c.grid_col_span || 4) + dw, 1, 12);
+          c.grid_row_span = clamp(Number(c.grid_row_span || 4) + dh, 1, 12);
+        });
+        renderCardsList();
+        renderPreview();
+        return;
+      }
+
+      const c = currentCard();
+      if (!c) return;
+
+      document.getElementById("cardColSpan").value = clamp(Number(document.getElementById("cardColSpan").value || 4) + dw, 1, 12);
+      document.getElementById("cardRowSpan").value = clamp(Number(document.getElementById("cardRowSpan").value || 4) + dh, 1, 12);
+      liveApplyFormToPreview();
+    }
+
+    function applyToSelectedPosition(dx, dy) {
+      selectedCardIds.forEach(id => {
+        const c = cards.find(x => x.id === id);
+        if (!c) return;
+        c.pos_x = clamp(Number(c.pos_x || 1) + dx, 1, 12);
+        c.pos_y = Math.max(1, Number(c.pos_y || 1) + dy);
+      });
+      renderCardsList();
+      renderPreview();
+    }
+
+    function liveApplyFormToPreview() {
+      if (!currentCardId) return;
+      const index = cards.findIndex(x => x.id === currentCardId);
+      if (index === -1) return;
+
+      cards[index] = {
+        ...cards[index],
+        ...collectCardPayload(),
+        id: currentCardId
+      };
+
+      renderPreview();
+      renderCardsList();
+    }
+
+    [
+      "cardTitle","cardSubtitle","cardBadge","cardDescription","cardBullets",
+      "cardButtonText","cardButtonUrl","cardEmoji","cardImageUrl",
+      "cardColSpan","cardRowSpan","cardMinHeight","cardPosX","cardPosY","cardSortOrder",
+      "cardImageOpacity","cardImageSize","cardImageBlur","cardImagePosition","cardImageTint",
+      "cardBackgroundColor","cardBorderColor","cardGlowColor","cardOverlayOpacity",
+      "cardContentAlign","cardVerticalAlign","cardHoverEffect","cardSizeType","cardStyle",
+      "cardIsActive","cardIsFeatured"
+    ].forEach(id => {
+      window.addEventListener("DOMContentLoaded", () => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("input", liveApplyFormToPreview);
+        el.addEventListener("change", liveApplyFormToPreview);
+      });
+    });
+
+    async function saveSettings() {
+      showStatus("settingsMsg", "", "");
+
+      try {
+        const pairs = [
+          ["site_title", document.getElementById("settingSiteTitle").value],
+          ["hero_title", document.getElementById("settingHeroTitle").value],
+          ["hero_accent", document.getElementById("settingHeroAccent").value],
+          ["hero_description", document.getElementById("settingHeroDescription").value],
+          ["site_subtitle", document.getElementById("settingSiteSubtitle").value],
+          ["guest_description", document.getElementById("settingGuestDescription").value]
+        ];
+
+        for (const [setting_key, setting_value] of pairs) {
+          const { data } = await apiPost("/api/ws/admin/settings/upsert", { setting_key, setting_value }, true);
+          if (!data.ok) throw new Error(data.error || ("Ошибка сохранения " + setting_key));
+        }
+
+        showStatus("settingsMsg", "Настройки сохранены", "success");
+      } catch (e) {
+        showStatus("settingsMsg", e.message, "error");
+      }
+    }
+
+    function renderPhrasesList() {
+      const wrap = document.getElementById("phrasesList");
+      wrap.innerHTML = "";
+
+      phrases.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "mini-card" + (item.id === currentPhraseId ? " active" : "");
+        el.innerHTML = `
+          <div class="mini-card-content">
+            <div class="mini-card-title">${escapeHtml(item.phrase || "Без текста")}</div>
+            <div class="mini-card-meta">id: ${item.id} · порядок: ${item.sort_order}</div>
+          </div>
+        `;
+        el.onclick = () => selectPhrase(item.id);
+        wrap.appendChild(el);
+      });
+    }
+
+    function selectPhrase(id) {
+      currentPhraseId = id;
+      const item = phrases.find(x => x.id === id);
+      if (!item) return;
+
+      document.getElementById("phraseText").value = item.phrase || "";
+      document.getElementById("phraseSortOrder").value = item.sort_order ?? 0;
+      document.getElementById("phraseIsActive").value = String(item.is_active !== false);
+      renderPhrasesList();
+    }
+
+    function newPhrase() {
+      currentPhraseId = null;
+      document.getElementById("phraseText").value = "";
+      document.getElementById("phraseSortOrder").value = phrases.length + 1;
+      document.getElementById("phraseIsActive").value = "true";
+      renderPhrasesList();
+    }
+
+    async function savePhrase() {
+      showStatus("phraseMsg", "", "");
+
+      try {
+        const payload = {
+          phrase: document.getElementById("phraseText").value.trim(),
+          sort_order: Number(document.getElementById("phraseSortOrder").value || 0),
+          is_active: document.getElementById("phraseIsActive").value === "true"
+        };
+
+        let data;
+        if (currentPhraseId) {
+          ({ data } = await apiPost("/api/ws/admin/glitch/update", { phrase_id: currentPhraseId, ...payload }, true));
+        } else {
+          ({ data } = await apiPost("/api/ws/admin/glitch/create", payload, true));
+        }
+
+        if (!data.ok) {
+          showStatus("phraseMsg", data.error || "Ошибка сохранения", "error");
+          return;
+        }
+
+        showStatus("phraseMsg", "Сохранено", "success");
+        await loadPhrases();
+
+        if (data.item?.id) {
+          currentPhraseId = data.item.id;
+          selectPhrase(currentPhraseId);
+        }
+      } catch (e) {
+        showStatus("phraseMsg", e.message, "error");
+      }
+    }
+
+    async function deletePhrase() {
+      showStatus("phraseMsg", "", "");
+
+      if (!currentPhraseId) {
+        showStatus("phraseMsg", "Сначала выбери фразу", "error");
+        return;
+      }
+
+      if (!confirm("Удалить фразу?")) return;
+
+      try {
+        const { data } = await apiPost("/api/ws/admin/glitch/delete", { phrase_id: currentPhraseId }, true);
+
+        if (!data.ok) {
+          showStatus("phraseMsg", data.error || "Ошибка удаления", "error");
+          return;
+        }
+
+        showStatus("phraseMsg", "Удалено", "success");
+        currentPhraseId = null;
+        await loadPhrases();
+        if (phrases.length) selectPhrase(phrases[0].id);
+        else newPhrase();
+      } catch (e) {
+        showStatus("phraseMsg", e.message, "error");
+      }
+    }
+
+    document.getElementById("cardImageFile").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        uploadedImageBase64 = String(reader.result || "");
+        const img = document.getElementById("cardImagePreview");
+        img.src = uploadedImageBase64;
+        img.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // ================= REPORTS =================
+
+    async function loadIdeas() {
+      const page = Math.max(1, Number(document.getElementById("ideasPage").value || 1));
+      const status = document.getElementById("ideasStatusFilter").value;
+      const nick = document.getElementById("ideasNickFilter").value.trim();
+
+      const { data } = await apiGet(
+        `/api/ws/admin/reports/list?type=idea&page=${page}&per_page=50&status=${encodeURIComponent(status)}&nick=${encodeURIComponent(nick)}`,
+        true
+      );
+
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки предложений");
+
+      ideas = Array.isArray(data.items) ? data.items : [];
+      renderIdeasList();
+
+      if (ideas.length) {
+        const stillExists = ideas.find(x => String(x.id) === String(currentIdeaId));
+        selectIdea(stillExists ? stillExists.id : ideas[0].id);
+      } else {
+        currentIdeaId = null;
+        clearIdeaEditor();
+      }
+    }
+
+    function renderIdeasList() {
+      const wrap = document.getElementById("ideasList");
+      wrap.innerHTML = "";
+
+      ideas.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "simple-item";
+        el.innerHTML = `
+          <div class="simple-item-title">${escapeHtml(item.nick || "Без ника")}</div>
+          <div class="simple-item-meta">
+            ID: ${item.id} · ${badgeHtml("idea", item.status || "sent")}
+          </div>
+          <div class="simple-item-text">${escapeHtml(item.text || "").slice(0, 220)}${(item.text || "").length > 220 ? "..." : ""}</div>
+        `;
+        el.onclick = () => selectIdea(item.id);
+        wrap.appendChild(el);
+      });
+    }
+
+    function clearIdeaEditor() {
+      document.getElementById("ideaId").value = "";
+      document.getElementById("ideaNick").value = "";
+      document.getElementById("ideaText").value = "";
+      document.getElementById("ideaStatus").value = "sent";
+      document.getElementById("ideaCommentText").value = "";
+      document.getElementById("ideaRewardText").value = "";
+    }
+
+    function selectIdea(id) {
+      currentIdeaId = id;
+      const item = ideas.find(x => String(x.id) === String(id));
+      if (!item) return;
+
+      document.getElementById("ideaId").value = item.id || "";
+      document.getElementById("ideaNick").value = item.nick || "";
+      document.getElementById("ideaText").value = item.text || "";
+      document.getElementById("ideaStatus").value = item.status || "sent";
+      document.getElementById("ideaCommentText").value = item.comment_text || "";
+      document.getElementById("ideaRewardText").value = item.reward_text || "";
+    }
+
+    async function quickIdeaStatus(status) {
+      document.getElementById("ideaStatus").value = status;
+      await saveIdea();
+    }
+
+    async function saveIdea() {
+      const id = document.getElementById("ideaId").value.trim();
+      if (!id) {
+        showStatus("ideaMsg", "Выбери предложение", "error");
+        return;
+      }
+
+      try {
+        const { data } = await apiPost(
+          "/api/ws/admin/reports/update",
+          {
+            id,
+            type: "idea",
+            status: document.getElementById("ideaStatus").value,
+            comment_text: document.getElementById("ideaCommentText").value,
+            reward_text: document.getElementById("ideaRewardText").value
+          },
+          true
+        );
+
+        if (!data.ok) {
+          showStatus("ideaMsg", data.error || "Ошибка сохранения", "error");
+          return;
+        }
+
+        showStatus("ideaMsg", "Предложение обновлено", "success");
+        await loadIdeas();
+        selectIdea(id);
+      } catch (e) {
+        showStatus("ideaMsg", e.message, "error");
+      }
+    }
+
+    async function loadBugs() {
+      const page = Math.max(1, Number(document.getElementById("bugsPage").value || 1));
+      const status = document.getElementById("bugsStatusFilter").value;
+      const nick = document.getElementById("bugsNickFilter").value.trim();
+
+      const { data } = await apiGet(
+        `/api/ws/admin/reports/list?type=bug&page=${page}&per_page=50&status=${encodeURIComponent(status)}&nick=${encodeURIComponent(nick)}`,
+        true
+      );
+
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки багов");
+
+      bugs = Array.isArray(data.items) ? data.items : [];
+      renderBugsList();
+
+      if (bugs.length) {
+        const stillExists = bugs.find(x => String(x.id) === String(currentBugId));
+        selectBug(stillExists ? stillExists.id : bugs[0].id);
+      } else {
+        currentBugId = null;
+        clearBugEditor();
+      }
+    }
+
+    function renderBugsList() {
+      const wrap = document.getElementById("bugsList");
+      wrap.innerHTML = "";
+
+      bugs.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "simple-item";
+        el.innerHTML = `
+          <div class="simple-item-title">${escapeHtml(item.nick || "Без ника")}</div>
+          <div class="simple-item-meta">
+            ID: ${item.id} · ${badgeHtml("bug", item.status || "in_progress")}
+          </div>
+          <div class="simple-item-text">${escapeHtml(item.text || "").slice(0, 220)}${(item.text || "").length > 220 ? "..." : ""}</div>
+        `;
+        el.onclick = () => selectBug(item.id);
+        wrap.appendChild(el);
+      });
+    }
+
+    function clearBugEditor() {
+      document.getElementById("bugId").value = "";
+      document.getElementById("bugNick").value = "";
+      document.getElementById("bugText").value = "";
+      document.getElementById("bugStatus").value = "in_progress";
+      document.getElementById("bugCommentText").value = "";
+    }
+
+    function selectBug(id) {
+      currentBugId = id;
+      const item = bugs.find(x => String(x.id) === String(id));
+      if (!item) return;
+
+      document.getElementById("bugId").value = item.id || "";
+      document.getElementById("bugNick").value = item.nick || "";
+      document.getElementById("bugText").value = item.text || "";
+      document.getElementById("bugStatus").value = item.status || "in_progress";
+      document.getElementById("bugCommentText").value = item.comment_text || "";
+    }
+
+    async function quickBugStatus(status) {
+      document.getElementById("bugStatus").value = status;
+      await saveBug();
+    }
+
+    async function saveBug() {
+      const id = document.getElementById("bugId").value.trim();
+      if (!id) {
+        showStatus("bugMsg", "Выбери баг", "error");
+        return;
+      }
+
+      try {
+        const { data } = await apiPost(
+          "/api/ws/admin/reports/update",
+          {
+            id,
+            type: "bug",
+            status: document.getElementById("bugStatus").value,
+            comment_text: document.getElementById("bugCommentText").value
+          },
+          true
+        );
+
+        if (!data.ok) {
+          showStatus("bugMsg", data.error || "Ошибка сохранения", "error");
+          return;
+        }
+
+        showStatus("bugMsg", "Баг обновлён", "success");
+        await loadBugs();
+        selectBug(id);
+      } catch (e) {
+        showStatus("bugMsg", e.message, "error");
+      }
+    }
+
+    // ================= FINANCE =================
+
+    async function loadFinancePlayers() {
+      const query = document.getElementById("financeQuerySearch").value.trim();
+      if (!query) {
+        showStatus("financeMsg", "Введи запрос для поиска", "error");
+        return;
+      }
+
+      try {
+        const { data } = await apiGet(
+          `/api/ws/admin/finance/player?query=${encodeURIComponent(query)}`,
+          true
+        );
+
+        if (!data.ok) {
+          showStatus("financeMsg", data.error || "Ошибка загрузки игроков", "error");
+          return;
+        }
+
+        financePlayers = Array.isArray(data.items) ? data.items : [];
+        renderFinancePlayersList();
+
+        if (!financePlayers.length) {
+          currentFinanceRow = null;
+          clearFinancePanel();
+          showStatus("financeMsg", "Игроки не найдены", "error");
+          return;
+        }
+
+        selectFinancePlayer(financePlayers[0].id);
+        showStatus("financeMsg", "Игроки загружены", "success");
+      } catch (e) {
+        showStatus("financeMsg", e.message, "error");
+      }
+    }
+
+    function renderFinancePlayersList() {
+      const wrap = document.getElementById("financePlayersList");
+      wrap.innerHTML = "";
+
+      financePlayers.forEach(item => {
+        const active = currentFinanceRow && Number(currentFinanceRow.id) === Number(item.id);
+        const el = document.createElement("div");
+        el.className = "player-item" + (active ? " active" : "");
+        el.innerHTML = `
+          <div class="simple-item-title">${escapeHtml(item.nickname || item.login || "Без имени")}</div>
+          <div class="simple-item-meta">
+            login: ${escapeHtml(item.login || "")} · game_nick: ${escapeHtml(item.game_nick || "—")}
+          </div>
+          <div class="tool-row" style="margin-bottom:0;">
+            <span class="chip green">💰 ${Number(item.game_balance || 0)}</span>
+            <span class="chip yellow">📤 ${Number(item.to_output || 0)}</span>
+          </div>
+        `;
+        el.onclick = () => selectFinancePlayer(item.id);
+        wrap.appendChild(el);
+      });
+    }
+
+    function clearFinancePanel() {
+      document.getElementById("financeInfoBox").classList.add("hidden");
+      document.getElementById("financePlayerId").textContent = "—";
+      document.getElementById("financeLoginLabel").textContent = "—";
+      document.getElementById("financeNicknameLabel").textContent = "—";
+      document.getElementById("financeGameNickLabel").textContent = "—";
+      document.getElementById("financeGameBalance").textContent = "0";
+      document.getElementById("financeToOutput").textContent = "0";
+    }
+
+    function selectFinancePlayer(id) {
+      const item = financePlayers.find(x => Number(x.id) === Number(id));
+      if (!item) return;
+
+      currentFinanceRow = item;
+      document.getElementById("financeInfoBox").classList.remove("hidden");
+      document.getElementById("financePlayerId").textContent = item.id ?? "—";
+      document.getElementById("financeLoginLabel").textContent = item.login || "—";
+      document.getElementById("financeNicknameLabel").textContent = item.nickname || "—";
+      document.getElementById("financeGameNickLabel").textContent = item.game_nick || "—";
+      document.getElementById("financeGameBalance").textContent = item.game_balance ?? 0;
+      document.getElementById("financeToOutput").textContent = item.to_output ?? 0;
+
+      renderFinancePlayersList();
+    }
+
+    async function adjustFinance(field) {
+      if (!currentFinanceRow?.id) {
+        showStatus("financeMsg", "Сначала выбери игрока", "error");
+        return;
+      }
+
+      const deltaInput = field === "game_balance"
+        ? document.getElementById("financeGameBalanceDelta")
+        : document.getElementById("financeToOutputDelta");
+
+      const delta = Number(deltaInput.value || 0);
+      if (!Number.isFinite(delta) || delta === 0) {
+        showStatus("financeMsg", "Некорректное значение delta", "error");
+        return;
+      }
+
+      try {
+        const { data } = await apiPost(
+          "/api/ws/admin/finance/adjust",
+          {
+            player_id: Number(currentFinanceRow.id),
+            field,
+            delta
+          },
+          true
+        );
+
+        if (!data.ok) {
+          showStatus("financeMsg", data.error || "Ошибка изменения финансов", "error");
+          return;
+        }
+
+        deltaInput.value = "";
+        showStatus("financeMsg", `${field === "game_balance" ? "Игровой баланс" : "Доступно к выводу"} изменён`, "success");
+        await loadFinancePlayers();
+
+        if (data.row?.id) {
+          selectFinancePlayer(data.row.id);
+        }
+      } catch (e) {
+        showStatus("financeMsg", e.message, "error");
+      }
+    }
+
+    // ================= OBJECTS =================
+
+    async function loadObjects() {
+      const { data } = await apiGet("/api/ws/admin/objects", true);
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки предметов");
+      objects = Array.isArray(data.items) ? data.items : [];
+      renderObjectsList();
+
+      if (objects.length) {
+        const exists = objects.find(x => Number(x.id) === Number(currentObjectId));
+        selectObject(exists ? exists.id : objects[0].id);
+      } else {
+        newObject();
+      }
+    }
+
+    function renderObjectsList() {
+      const wrap = document.getElementById("objectsList");
+      wrap.innerHTML = "";
+
+      objects.forEach(item => {
+        const active = Number(item.id) === Number(currentObjectId);
+        const rarity = String(item.rarity || "Обычный");
+        const chipClass = rarity.toLowerCase().includes("эпич") || rarity.toLowerCase().includes("леген")
+          ? "yellow"
+          : rarity.toLowerCase().includes("ред")
+          ? "cyan"
+          : "";
+
+        const el = document.createElement("div");
+        el.className = "object-item" + (active ? " active" : "");
+        el.innerHTML = `
+          <div class="row-flex">
+            <div class="object-thumb">
+              ${item.image_url ? `<img src="${escapeHtml(item.image_url)}" alt="">` : "📦"}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div class="simple-item-title">${escapeHtml(item.title || "Без названия")}</div>
+              <div class="simple-item-meta">id: ${item.id} · цена: ${Number(item.price || 0)}</div>
+              <div class="tool-row" style="margin-bottom:0;">
+                <span class="chip ${chipClass}">${escapeHtml(rarity)}</span>
+                <span class="chip ${item.is_active ? 'green' : 'red'}">${item.is_active ? "Активен" : "Отключён"}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        el.onclick = () => selectObject(item.id);
+        wrap.appendChild(el);
+      });
+    }
+
+    function selectObject(id) {
+      currentObjectId = id;
+      const item = objects.find(x => Number(x.id) === Number(id));
+      if (!item) return;
+
+      document.getElementById("objectTitle").value = item.title || "";
+      document.getElementById("objectPrice").value = Number(item.price || 0);
+      document.getElementById("objectRarity").value = item.rarity || "Обычный";
+      document.getElementById("objectImageUrl").value = item.image_url || "";
+      document.getElementById("objectIsActive").value = String(item.is_active !== false);
+
+      uploadedObjectImageBase64 = "";
+      document.getElementById("objectImagePreview").classList.add("hidden");
+
+      renderObjectPreview(item);
+      renderObjectsList();
+    }
+
+    function renderObjectPreview(item = null) {
+      const title = item ? item.title || "Название предмета" : document.getElementById("objectTitle").value.trim() || "Название предмета";
+      const price = item ? Number(item.price || 0) : Number(document.getElementById("objectPrice").value || 0);
+      const rarity = item ? item.rarity || "Обычный" : document.getElementById("objectRarity").value.trim() || "Обычный";
+      const imageUrl = item ? item.image_url || "" : document.getElementById("objectImageUrl").value.trim();
+      const isActive = item ? item.is_active !== false : document.getElementById("objectIsActive").value === "true";
+
+      const thumb = document.getElementById("objectPreviewThumb");
+      const titleEl = document.getElementById("objectPreviewTitle");
+      const rarityEl = document.getElementById("objectPreviewRarity");
+      const priceEl = document.getElementById("objectPreviewPrice");
+      const activeWrap = document.getElementById("objectPreviewActiveWrap");
+
+      if (thumb) {
+        thumb.innerHTML = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="">` : "📦";
+      }
+      if (titleEl) titleEl.textContent = title;
+      if (rarityEl) rarityEl.textContent = rarity;
+      if (priceEl) priceEl.textContent = "$" + Number(price || 0).toLocaleString("ru-RU");
+      if (activeWrap) {
+        activeWrap.innerHTML = `<span class="chip ${isActive ? "green" : "red"}">${isActive ? "Активен" : "Отключён"}</span>`;
+      }
+    }
+
+    function newObject() {
+      currentObjectId = null;
+      document.getElementById("objectTitle").value = "";
+      document.getElementById("objectPrice").value = 0;
+      document.getElementById("objectRarity").value = "Обычный";
+      document.getElementById("objectImageUrl").value = "";
+      document.getElementById("objectIsActive").value = "true";
+
+      uploadedObjectImageBase64 = "";
+      document.getElementById("objectImagePreview").classList.add("hidden");
+
+      renderObjectPreview(null);
+      renderObjectsList();
+    }
+
+    async function uploadObjectImageIfNeeded(payload) {
+      if (!uploadedObjectImageBase64) return payload;
+
+      const { data } = await apiPost("/api/ws/admin/upload-image", {
+        image_base64: uploadedObjectImageBase64
+      }, true);
+
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки картинки");
+
+      payload.image_url = data.image_url || "";
+      document.getElementById("objectImageUrl").value = payload.image_url;
+      uploadedObjectImageBase64 = "";
+      return payload;
+    }
+
+    function collectObjectPayload() {
+      return {
+        title: document.getElementById("objectTitle").value.trim(),
+        price: Math.max(0, Number(document.getElementById("objectPrice").value || 0)),
+        rarity: document.getElementById("objectRarity").value.trim() || "Обычный",
+        image_url: document.getElementById("objectImageUrl").value.trim(),
+        is_active: document.getElementById("objectIsActive").value === "true"
+      };
+    }
+
+    async function saveObject() {
+      showStatus("objectMsg", "", "");
+
+      try {
+        let payload = collectObjectPayload();
+        payload = await uploadObjectImageIfNeeded(payload);
+
+        let data;
+        if (currentObjectId) {
+          ({ data } = await apiPost("/api/ws/admin/objects/update", {
+            object_id: currentObjectId,
+            ...payload
+          }, true));
+        } else {
+          ({ data } = await apiPost("/api/ws/admin/objects/create", payload, true));
+        }
+
+        if (!data.ok) {
+          showStatus("objectMsg", data.error || "Ошибка сохранения предмета", "error");
+          return;
+        }
+
+        showStatus("objectMsg", "Предмет сохранён", "success");
+        await loadObjects();
+
+        if (data.item?.id) {
+          currentObjectId = data.item.id;
+          selectObject(currentObjectId);
+        }
+      } catch (e) {
+        showStatus("objectMsg", e.message, "error");
+      }
+    }
+
+    async function deleteObject() {
+      if (!currentObjectId) {
+        showStatus("objectMsg", "Сначала выбери предмет", "error");
+        return;
+      }
+
+      if (!confirm("Удалить предмет?")) return;
+
+      try {
+        const { data } = await apiPost("/api/ws/admin/objects/delete", {
+          object_id: currentObjectId
+        }, true);
+
+        if (!data.ok) {
+          showStatus("objectMsg", data.error || "Ошибка удаления предмета", "error");
+          return;
+        }
+
+        showStatus("objectMsg", "Предмет удалён", "success");
+        currentObjectId = null;
+        await loadObjects();
+      } catch (e) {
+        showStatus("objectMsg", e.message, "error");
+      }
+    }
+
+    // ================= ROULETTE PRIZES =================
+
+    async function loadRoulettePrizesAdmin() {
+      const { data } = await apiGet("/api/ws/admin/roulette/prizes", true);
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки призов рулетки");
+      roulettePrizes = Array.isArray(data.items) ? data.items : [];
+      renderRoulettePrizesList();
+
+      if (roulettePrizes.length) {
+        const exists = roulettePrizes.find(x => Number(x.id) === Number(currentRoulettePrizeId));
+        selectRoulettePrize(exists ? exists.id : roulettePrizes[0].id);
+      } else {
+        newRoulettePrize();
+      }
+    }
+
+    async function loadObjectsForRouletteHint() {
+      try {
+        const { data } = await apiGet("/api/ws/admin/objects", true);
+        if (!data.ok) return;
+        objects = Array.isArray(data.items) ? data.items : objects;
+      } catch {}
+    }
+
+    function renderRoulettePrizesList() {
+      const wrap = document.getElementById("roulettePrizesList");
+      wrap.innerHTML = "";
+
+      roulettePrizes.forEach(item => {
+        const active = Number(item.id) === Number(currentRoulettePrizeId);
+
+        const el = document.createElement("div");
+        el.className = "prize-item" + (active ? " active" : "");
+        el.innerHTML = `
+          <div class="row-flex">
+            <div class="prize-thumb">
+              ${item.image_url ? `<img src="${escapeHtml(item.image_url)}" alt="">` : escapeHtml(item.icon || "🎁")}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div class="simple-item-title">${escapeHtml(item.title || "Без названия")}</div>
+              <div class="simple-item-meta">id: ${item.id} · sort: ${Number(item.sort_order || 0)}</div>
+              <div class="tool-row" style="margin-bottom:0;">
+                <span class="chip cyan">${escapeHtml(item.type || "money")}</span>
+                <span class="chip yellow">value: ${Number(item.value || 0)}</span>
+                <span class="chip">chance: ${Number(item.probability || 1)}</span>
+                <span class="chip ${item.is_active ? "green" : "red"}">${item.is_active ? "Активен" : "Отключён"}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        el.onclick = () => selectRoulettePrize(item.id);
+        wrap.appendChild(el);
+      });
+    }
+
+    function toggleRoulettePrizeFields() {
+      const type = document.getElementById("rouletteType").value;
+      document.getElementById("rouletteObjectWrap").classList.toggle("hidden", type !== "item");
+      renderRoulettePreview(null);
+    }
+
+    function selectRoulettePrize(id) {
+      currentRoulettePrizeId = id;
+      const item = roulettePrizes.find(x => Number(x.id) === Number(id));
+      if (!item) return;
+
+      document.getElementById("rouletteTitle").value = item.title || "";
+      document.getElementById("rouletteType").value = item.type || "money";
+      document.getElementById("rouletteValue").value = Number(item.value || 0);
+      document.getElementById("rouletteObjectId").value = item.object_id ?? "";
+      document.getElementById("rouletteProbability").value = Number(item.probability || 1);
+      document.getElementById("rouletteSortOrder").value = Number(item.sort_order || 0);
+      document.getElementById("rouletteIcon").value = item.icon || "🎁";
+      document.getElementById("rouletteImageUrl").value = item.image_url || "";
+      document.getElementById("rouletteIsActive").value = String(item.is_active !== false);
+
+      uploadedRouletteImageBase64 = "";
+      document.getElementById("rouletteImagePreview").classList.add("hidden");
+
+      toggleRoulettePrizeFields();
+      renderRoulettePreview(item);
+      renderRoulettePrizesList();
+    }
+
+    function renderRoulettePreview(item = null) {
+      const type = item ? item.type || "money" : document.getElementById("rouletteType").value;
+      const title = item ? item.title || "Название приза" : document.getElementById("rouletteTitle").value.trim() || "Название приза";
+      const value = item ? Number(item.value || 0) : Number(document.getElementById("rouletteValue").value || 0);
+      const objectId = item ? (item.object_id ?? "") : document.getElementById("rouletteObjectId").value.trim();
+      const probability = item ? Number(item.probability || 1) : Number(document.getElementById("rouletteProbability").value || 1);
+      const icon = item ? item.icon || "🎁" : document.getElementById("rouletteIcon").value.trim() || "🎁";
+      const imageUrl = item ? item.image_url || "" : document.getElementById("rouletteImageUrl").value.trim();
+
+      const thumb = document.getElementById("roulettePreviewThumb");
+      const titleEl = document.getElementById("roulettePreviewTitle");
+      const metaEl = document.getElementById("roulettePreviewMeta");
+      const typeChip = document.getElementById("roulettePreviewTypeChip");
+      const valueChip = document.getElementById("roulettePreviewValueChip");
+      const probChip = document.getElementById("roulettePreviewProbChip");
+
+      if (thumb) {
+        thumb.innerHTML = imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="">` : escapeHtml(icon);
+      }
+      if (titleEl) titleEl.textContent = title;
+      if (metaEl) {
+        metaEl.textContent = type === "item"
+          ? `Предметный приз${objectId ? ` · object_id: ${objectId}` : ""}`
+          : "Денежный приз";
+      }
+      if (typeChip) typeChip.textContent = type;
+      if (valueChip) valueChip.textContent = `value: ${value}`;
+      if (probChip) probChip.textContent = `chance: ${probability}`;
+    }
+
+    function newRoulettePrize() {
+      currentRoulettePrizeId = null;
+      document.getElementById("rouletteTitle").value = "";
+      document.getElementById("rouletteType").value = "money";
+      document.getElementById("rouletteValue").value = 0;
+      document.getElementById("rouletteObjectId").value = "";
+      document.getElementById("rouletteProbability").value = 1;
+      document.getElementById("rouletteSortOrder").value = roulettePrizes.length + 1;
+      document.getElementById("rouletteIcon").value = "🎁";
+      document.getElementById("rouletteImageUrl").value = "";
+      document.getElementById("rouletteIsActive").value = "true";
+
+      uploadedRouletteImageBase64 = "";
+      document.getElementById("rouletteImagePreview").classList.add("hidden");
+
+      toggleRoulettePrizeFields();
+      renderRoulettePreview(null);
+      renderRoulettePrizesList();
+    }
+
+    async function uploadRouletteImageIfNeeded(payload) {
+      if (!uploadedRouletteImageBase64) return payload;
+
+      const { data } = await apiPost("/api/ws/admin/upload-image", {
+        image_base64: uploadedRouletteImageBase64
+      }, true);
+
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки картинки");
+
+      payload.image_url = data.image_url || "";
+      document.getElementById("rouletteImageUrl").value = payload.image_url;
+      uploadedRouletteImageBase64 = "";
+      return payload;
+    }
+
+    function collectRoulettePrizePayload() {
+      const type = document.getElementById("rouletteType").value;
+      return {
+        title: document.getElementById("rouletteTitle").value.trim(),
+        type,
+        value: Math.max(0, Number(document.getElementById("rouletteValue").value || 0)),
+        object_id: type === "item" ? Number(document.getElementById("rouletteObjectId").value || 0) : null,
+        probability: Math.max(1, Number(document.getElementById("rouletteProbability").value || 1)),
+        sort_order: Math.max(0, Number(document.getElementById("rouletteSortOrder").value || 0)),
+        icon: document.getElementById("rouletteIcon").value.trim() || "🎁",
+        image_url: document.getElementById("rouletteImageUrl").value.trim(),
+        is_active: document.getElementById("rouletteIsActive").value === "true"
+      };
+    }
+
+    async function saveRoulettePrize() {
+      showStatus("rouletteMsg", "", "");
+
+      try {
+        let payload = collectRoulettePrizePayload();
+        payload = await uploadRouletteImageIfNeeded(payload);
+
+        let data;
+        if (currentRoulettePrizeId) {
+          ({ data } = await apiPost("/api/ws/admin/roulette/prizes/update", {
+            prize_id: currentRoulettePrizeId,
+            ...payload
+          }, true));
+        } else {
+          ({ data } = await apiPost("/api/ws/admin/roulette/prizes/create", payload, true));
+        }
+
+        if (!data.ok) {
+          showStatus("rouletteMsg", data.error || "Ошибка сохранения приза", "error");
+          return;
+        }
+
+        showStatus("rouletteMsg", "Приз сохранён", "success");
+        await loadRoulettePrizesAdmin();
+
+        if (data.item?.id) {
+          currentRoulettePrizeId = data.item.id;
+          selectRoulettePrize(currentRoulettePrizeId);
+        }
+      } catch (e) {
+        showStatus("rouletteMsg", e.message, "error");
+      }
+    }
+
+    async function deleteRoulettePrize() {
+      if (!currentRoulettePrizeId) {
+        showStatus("rouletteMsg", "Сначала выбери приз", "error");
+        return;
+      }
+
+      if (!confirm("Удалить приз рулетки?")) return;
+
+      try {
+        const { data } = await apiPost("/api/ws/admin/roulette/prizes/delete", {
+          prize_id: currentRoulettePrizeId
+        }, true);
+
+        if (!data.ok) {
+          showStatus("rouletteMsg", data.error || "Ошибка удаления приза", "error");
+          return;
+        }
+
+        showStatus("rouletteMsg", "Приз удалён", "success");
+        currentRoulettePrizeId = null;
+        await loadRoulettePrizesAdmin();
+      } catch (e) {
+        showStatus("rouletteMsg", e.message, "error");
+      }
+    }
+
+    // ================= FILE INPUTS =================
+
+    document.getElementById("objectImageFile").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        uploadedObjectImageBase64 = String(reader.result || "");
+        const img = document.getElementById("objectImagePreview");
+        img.src = uploadedObjectImageBase64;
+        img.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("rouletteImageFile").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        uploadedRouletteImageBase64 = String(reader.result || "");
+        const img = document.getElementById("rouletteImagePreview");
+        img.src = uploadedRouletteImageBase64;
+        img.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    [
+      "objectTitle","objectPrice","objectRarity","objectImageUrl","objectIsActive"
+    ].forEach(id => {
+      window.addEventListener("DOMContentLoaded", () => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("input", () => renderObjectPreview(null));
+        el.addEventListener("change", () => renderObjectPreview(null));
+      });
+    });
+
+    [
+      "rouletteTitle","rouletteType","rouletteValue","rouletteObjectId","rouletteProbability","rouletteSortOrder","rouletteIcon","rouletteImageUrl","rouletteIsActive"
+    ].forEach(id => {
+      window.addEventListener("DOMContentLoaded", () => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener("input", () => renderRoulettePreview(null));
+        el.addEventListener("change", () => renderRoulettePreview(null));
+      });
+    });
+
+    async function bootstrap() {
+      try {
+        if (!token()) {
+          showLogin();
+          return;
+        }
+
+        await loadMe();
+        await loadCurrentSection();
+      } catch (e) {
+        console.error(e);
+        adminLogout();
+      }
+    }
+
+    bootstrap();
+  </script>
+</body>
+</html>
