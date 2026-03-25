@@ -642,13 +642,38 @@
     .chip.yellow{color:#ffd166;border-color:rgba(255,209,102,.18);background:rgba(255,209,102,.08)}
     .chip.cyan{color:#8ce8ff;border-color:rgba(99,221,255,.18);background:rgba(99,221,255,.08)}
 
+    .inventory-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .inventory-card{
+      padding:12px;
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+    }
+
+    .mono{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:12px;
+    }
+
+    .split-layout{
+      display:grid;
+      grid-template-columns:420px 1fr;
+      gap:12px;
+    }
+
     @keyframes fadeUp{
       from{opacity:0;transform:translateY(10px)}
       to{opacity:1;transform:translateY(0)}
     }
 
     @media (max-width: 1280px){
-      .layout{grid-template-columns:1fr}
+      .layout,.split-layout{grid-template-columns:1fr}
       .preview-grid{grid-template-columns:repeat(6, 1fr)}
       .preview-card{grid-column:span 6 !important;grid-row:auto !important}
       .preview-card h3,.preview-card p,.preview-card ul{max-width:100%}
@@ -664,6 +689,20 @@
       <input id="loginPassword" class="field" type="password" placeholder="Пароль" />
       <button class="btn green" style="width:100%;" onclick="adminLogin()">Войти</button>
       <div id="loginMsg" class="status error"></div>
+    </div>
+
+    <div id="adminVkConfirmView" class="login-box hidden">
+      <div class="section-title">Подтверждение входа администратора</div>
+      <div class="muted" style="margin-bottom:12px;">
+        Введи код из VK для завершения входа.
+      </div>
+      <input id="adminVkCode" class="field" placeholder="Код из VK" maxlength="6" />
+      <div class="tool-row">
+        <button class="btn green" style="flex:1;" onclick="confirmAdminVkCode()">Подтвердить вход</button>
+        <button class="btn" style="flex:1;" onclick="backToLoginFromVkConfirm()">Назад</button>
+      </div>
+      <div id="adminVkConfirmMeta" class="muted" style="margin-top:10px;"></div>
+      <div id="adminVkConfirmMsg" class="status"></div>
     </div>
 
     <div id="adminView" class="hidden">
@@ -686,6 +725,8 @@
         <button class="main-section-btn" id="mainSectionFinanceBtn" onclick="switchMainSection('finance')">💰 Финансы WS</button>
         <button class="main-section-btn" id="mainSectionObjectsBtn" onclick="switchMainSection('objects')">📦 Предметы магазина</button>
         <button class="main-section-btn" id="mainSectionRouletteBtn" onclick="switchMainSection('roulette')">🎰 Призы в рулетке</button>
+        <button class="main-section-btn" id="mainSectionOnlineBtn" onclick="switchMainSection('online')">🟢 Онлайн</button>
+        <button class="main-section-btn" id="mainSectionProfileBtn" onclick="switchMainSection('profile')">👤 Мой профиль WS</button>
       </div>
 
       <!-- ================= DESIGN ================= -->
@@ -1153,7 +1194,12 @@
                 </div>
                 <div>
                   <div class="label">Редкость</div>
-                  <input id="objectRarity" class="field" placeholder="Эпический" />
+                  <select id="objectRarity" class="select">
+                    <option value="Обычный">Обычный</option>
+                    <option value="Редкий">Редкий</option>
+                    <option value="Эпический">Эпический</option>
+                    <option value="Легендарный">Легендарный</option>
+                  </select>
                 </div>
               </div>
 
@@ -1174,6 +1220,19 @@
               </select>
 
               <div id="objectMsg" class="status"></div>
+
+              <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:16px 0;">
+              <div class="section-title" style="font-size:16px;">Массовое создание предметов</div>
+
+              <div class="info-box">
+                <div class="muted" style="margin-bottom:10px;">
+                  Формат: <span class="mono">Название | Цена | Редкость | image_url | true/false</span><br>
+                  Пример: <span class="mono">Кристалл | 5000 | Эпический | https://... | true</span>
+                </div>
+                <textarea id="bulkObjectsTextarea" class="textarea" placeholder="Предмет 1 | 1000 | Обычный |  | true&#10;Предмет 2 | 5000 | Эпический | https://... | true"></textarea>
+                <button class="btn cyan" style="width:100%;" onclick="bulkCreateObjects()">Создать все предметы</button>
+                <div id="bulkObjectsMsg" class="status"></div>
+              </div>
 
               <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:16px 0;">
               <div class="section-title" style="font-size:16px;">Список предметов</div>
@@ -1201,8 +1260,7 @@
               <div class="info-box">
                 <div class="section-title" style="font-size:16px;">Подсказка</div>
                 <div class="muted" style="line-height:1.7;">
-                  Здесь ты управляешь товарами магазина World Script.  
-                  Эти предметы потом используются:
+                  Эти предметы используются:
                   <br>• в магазине
                   <br>• в инвентаре пользователей
                   <br>• как item-призы рулетки
@@ -1286,6 +1344,31 @@
               <div id="rouletteMsg" class="status"></div>
 
               <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:16px 0;">
+              <div class="section-title" style="font-size:16px;">Массовое добавление item-призов</div>
+              <div class="info-box">
+                <div class="label">Выбери предметы</div>
+                <div id="rouletteBulkObjectsList" class="card-list"></div>
+
+                <div class="grid3">
+                  <div>
+                    <div class="label">value</div>
+                    <input id="rouletteBulkValue" class="field" type="number" min="1" value="1" />
+                  </div>
+                  <div>
+                    <div class="label">probability</div>
+                    <input id="rouletteBulkProbability" class="field" type="number" min="1" value="1" />
+                  </div>
+                  <div>
+                    <div class="label">Стартовый sort</div>
+                    <input id="rouletteBulkSortOrderStart" class="field" type="number" min="0" value="0" />
+                  </div>
+                </div>
+
+                <button class="btn cyan" style="width:100%;" onclick="bulkCreateRouletteFromObjects()">Добавить выбранные предметы в рулетку</button>
+                <div id="rouletteBulkMsg" class="status"></div>
+              </div>
+
+              <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:16px 0;">
               <div class="section-title" style="font-size:16px;">Список призов</div>
               <div id="roulettePrizesList" class="card-list"></div>
             </div>
@@ -1316,6 +1399,106 @@
                   <br>• <b>item</b> — выдаёт предмет из <b>ws_object</b> по <b>object_id</b>
                   <br>• <b>value</b> — сумма денег или количество предмета
                   <br>• <b>probability</b> — вес шанса выпадения
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= ONLINE ================= -->
+      <div id="onlineSection" class="hidden">
+        <div class="split-layout">
+          <div class="panel sidebar">
+            <div class="panel-body">
+              <div class="section-title">Мониторинг онлайна</div>
+              <div class="tool-row">
+                <button class="btn green" onclick="loadOnlineData()">Обновить онлайн</button>
+                <button class="btn cyan" onclick="toggleOnlineAutoRefresh()"><span id="onlineAutoBtnText">Авто: выкл</span></button>
+              </div>
+              <div class="info-box">
+                <div><b>Сайт онлайн:</b> <span id="siteOnlineCount">0</span></div>
+                <div style="margin-top:6px;"><b>PS онлайн:</b> <span id="psOnlineCount">0</span></div>
+                <div style="margin-top:6px;"><b>Последнее обновление:</b> <span id="onlineLastLoaded">—</span></div>
+              </div>
+              <div id="onlineMsg" class="status"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="grid2">
+                <div>
+                  <div class="section-title" style="font-size:18px;">Онлайн на сайте</div>
+                  <div id="siteOnlineList" class="simple-list"></div>
+                </div>
+                <div>
+                  <div class="section-title" style="font-size:18px;">Онлайн в PS</div>
+                  <div id="psOnlineList" class="simple-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= PROFILE ================= -->
+      <div id="profileSection" class="hidden">
+        <div class="split-layout">
+          <div class="panel sidebar">
+            <div class="panel-body">
+              <div class="section-title">Мой профиль WS</div>
+              <div class="tool-row">
+                <button class="btn green small" onclick="loadMyWsProfile()">Обновить профиль</button>
+                <button class="btn cyan small" onclick="loadMyWsUtilities()">Обновить статусы</button>
+              </div>
+
+              <div class="label">Загрузка аватара</div>
+              <div class="upload-box" onclick="document.getElementById('myAvatarFile').click()">
+                Нажми, чтобы выбрать новый аватар
+                <img id="myAvatarPreview" class="upload-preview hidden" alt="avatar preview" />
+              </div>
+              <input id="myAvatarFile" type="file" accept="image/*" class="hidden" />
+              <button class="btn yellow" style="width:100%;" onclick="uploadMyAvatar()">Загрузить аватар</button>
+
+              <div class="tool-row" style="margin-top:12px;">
+                <button class="btn small" onclick="generateWsLinkCode()">Общий link-code</button>
+                <button class="btn small" onclick="generateVkLinkCode()">VK-code</button>
+                <button class="btn small" onclick="generateNickLinkCode()">Nick-code</button>
+              </div>
+
+              <div class="tool-row">
+                <button class="btn small" onclick="markLinkSeen()">mark-link-seen</button>
+                <button class="btn red small" onclick="unlinkMyGame()">Отвязать game</button>
+              </div>
+
+              <div id="profileMsg" class="status"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body">
+              <div class="grid2">
+                <div>
+                  <div class="section-title" style="font-size:18px;">Основной профиль</div>
+                  <div id="myProfileBox" class="info-box">
+                    <div class="muted">Профиль ещё не загружен</div>
+                  </div>
+
+                  <div class="section-title" style="font-size:18px;">Привязка и коды</div>
+                  <div id="myLinkCodesBox" class="info-box">
+                    <div class="muted">Коды ещё не загружены</div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="section-title" style="font-size:18px;">Бонус / сундук / рулетка</div>
+                  <div id="myUtilitiesBox" class="info-box">
+                    <div class="muted">Статусы ещё не загружены</div>
+                  </div>
+
+                  <div class="section-title" style="font-size:18px;">Инвентарь</div>
+                  <div id="myInventoryWrap" class="inventory-grid"></div>
                 </div>
               </div>
             </div>
@@ -1357,6 +1540,18 @@
     let roulettePrizes = [];
     let currentRoulettePrizeId = null;
     let uploadedRouletteImageBase64 = "";
+    let selectedRouletteBulkObjectIds = new Set();
+
+    let pendingAdminTempUserId = null;
+    let pendingAdminRequestExpiresAt = "";
+
+    let siteOnlineRows = [];
+    let psOnlineRows = [];
+    let onlineAutoTimer = null;
+    let onlineAutoEnabled = false;
+
+    let myProfileFull = null;
+    let uploadedMyAvatarBase64 = "";
 
     function token(){ return localStorage.getItem(TOKEN_KEY) || ""; }
 
@@ -1394,11 +1589,28 @@
     function showLogin() {
       document.getElementById("loginView").classList.remove("hidden");
       document.getElementById("adminView").classList.add("hidden");
+      document.getElementById("adminVkConfirmView").classList.add("hidden");
     }
 
     function showAdmin() {
       document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("adminVkConfirmView").classList.add("hidden");
       document.getElementById("adminView").classList.remove("hidden");
+    }
+
+    function showAdminVkConfirm() {
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("adminView").classList.add("hidden");
+      document.getElementById("adminVkConfirmView").classList.remove("hidden");
+    }
+
+    function backToLoginFromVkConfirm() {
+      pendingAdminTempUserId = null;
+      pendingAdminRequestExpiresAt = "";
+      document.getElementById("adminVkCode").value = "";
+      document.getElementById("adminVkConfirmMeta").textContent = "";
+      showStatus("adminVkConfirmMsg", "", "");
+      showLogin();
     }
 
     async function adminLogin() {
@@ -1409,8 +1621,27 @@
 
       try {
         const { data } = await apiPost("/api/ws/login", { login, password }, false);
+
         if (!data.ok) {
           msg.textContent = data.error || "Ошибка входа";
+          return;
+        }
+
+        if (data.need_admin_vk_confirm) {
+          pendingAdminTempUserId = Number(data.temp_user_id || 0);
+          pendingAdminRequestExpiresAt = String(data.request_expires_at || "");
+          document.getElementById("adminVkCode").value = "";
+          document.getElementById("adminVkConfirmMeta").textContent =
+            pendingAdminRequestExpiresAt
+              ? `Код нужно ввести до: ${new Date(pendingAdminRequestExpiresAt).toLocaleString("ru-RU")}`
+              : "Ожидается код подтверждения";
+          showStatus("adminVkConfirmMsg", "Ожидаем код из VK", "success");
+          showAdminVkConfirm();
+          return;
+        }
+
+        if (!data.token) {
+          msg.textContent = "Сервер не вернул токен";
           return;
         }
 
@@ -1422,9 +1653,55 @@
       }
     }
 
+    async function confirmAdminVkCode() {
+      const code = document.getElementById("adminVkCode").value.trim();
+
+      if (!pendingAdminTempUserId) {
+        showStatus("adminVkConfirmMsg", "Нет временного пользователя для подтверждения", "error");
+        return;
+      }
+
+      if (!code) {
+        showStatus("adminVkConfirmMsg", "Введи код из VK", "error");
+        return;
+      }
+
+      try {
+        const { data } = await apiPost("/api/ws/admin/confirm-vk-login", {
+          temp_user_id: pendingAdminTempUserId,
+          code
+        }, false);
+
+        if (!data.ok) {
+          showStatus("adminVkConfirmMsg", data.error || "Ошибка подтверждения", "error");
+          return;
+        }
+
+        if (!data.token) {
+          showStatus("adminVkConfirmMsg", "Сервер не вернул токен", "error");
+          return;
+        }
+
+        localStorage.setItem(TOKEN_KEY, data.token);
+        pendingAdminTempUserId = null;
+        pendingAdminRequestExpiresAt = "";
+        document.getElementById("adminVkCode").value = "";
+
+        await loadMe();
+        await loadCurrentSection();
+      } catch (e) {
+        showStatus("adminVkConfirmMsg", e.message || "Ошибка подтверждения", "error");
+      }
+    }
+
     function adminLogout() {
       localStorage.removeItem(TOKEN_KEY);
       currentUser = null;
+      pendingAdminTempUserId = null;
+      pendingAdminRequestExpiresAt = "";
+      if (onlineAutoTimer) clearInterval(onlineAutoTimer);
+      onlineAutoTimer = null;
+      onlineAutoEnabled = false;
       showLogin();
     }
 
@@ -1445,19 +1722,14 @@
     function switchMainSection(name) {
       currentMainSection = name;
 
-      document.getElementById("designSection").classList.toggle("hidden", name !== "design");
-      document.getElementById("ideasSection").classList.toggle("hidden", name !== "ideas");
-      document.getElementById("bugsSection").classList.toggle("hidden", name !== "bugs");
-      document.getElementById("financeSection").classList.toggle("hidden", name !== "finance");
-      document.getElementById("objectsSection").classList.toggle("hidden", name !== "objects");
-      document.getElementById("rouletteSection").classList.toggle("hidden", name !== "roulette");
-
-      document.getElementById("mainSectionDesignBtn").classList.toggle("active", name === "design");
-      document.getElementById("mainSectionIdeasBtn").classList.toggle("active", name === "ideas");
-      document.getElementById("mainSectionBugsBtn").classList.toggle("active", name === "bugs");
-      document.getElementById("mainSectionFinanceBtn").classList.toggle("active", name === "finance");
-      document.getElementById("mainSectionObjectsBtn").classList.toggle("active", name === "objects");
-      document.getElementById("mainSectionRouletteBtn").classList.toggle("active", name === "roulette");
+      [
+        "design","ideas","bugs","finance","objects","roulette","online","profile"
+      ].forEach(section => {
+        const sec = document.getElementById(section + "Section");
+        const btn = document.getElementById("mainSection" + section.charAt(0).toUpperCase() + section.slice(1) + "Btn");
+        if (sec) sec.classList.toggle("hidden", name !== section);
+        if (btn) btn.classList.toggle("active", name === section);
+      });
 
       document.getElementById("saveSelectedBtn").classList.toggle("hidden", name !== "design");
 
@@ -1475,6 +1747,10 @@
         await loadObjects();
       } else if (currentMainSection === "roulette") {
         await Promise.all([loadRoulettePrizesAdmin(), loadObjectsForRouletteHint()]);
+      } else if (currentMainSection === "online") {
+        await loadOnlineData();
+      } else if (currentMainSection === "profile") {
+        await Promise.all([loadMyWsProfile(), loadMyWsUtilities()]);
       }
     }
 
@@ -2546,6 +2822,7 @@
       if (!data.ok) throw new Error(data.error || "Ошибка загрузки предметов");
       objects = Array.isArray(data.items) ? data.items : [];
       renderObjectsList();
+      renderRouletteBulkObjectsList();
 
       if (objects.length) {
         const exists = objects.find(x => Number(x.id) === Number(currentObjectId));
@@ -2732,6 +3009,57 @@
       }
     }
 
+    async function bulkCreateObjects() {
+      const text = document.getElementById("bulkObjectsTextarea").value.trim();
+      showStatus("bulkObjectsMsg", "", "");
+
+      if (!text) {
+        showStatus("bulkObjectsMsg", "Добавь строки для создания", "error");
+        return;
+      }
+
+      const lines = text.split("\n").map(x => x.trim()).filter(Boolean);
+      if (!lines.length) {
+        showStatus("bulkObjectsMsg", "Нет валидных строк", "error");
+        return;
+      }
+
+      let okCount = 0;
+      let errCount = 0;
+
+      for (const line of lines) {
+        const parts = line.split("|").map(x => x.trim());
+        const title = parts[0] || "";
+        const price = Math.max(0, Number(parts[1] || 0));
+        const rarity = parts[2] || "Обычный";
+        const image_url = parts[3] || "";
+        const is_active = String(parts[4] || "true").toLowerCase() !== "false";
+
+        if (!title) {
+          errCount++;
+          continue;
+        }
+
+        try {
+          const { data } = await apiPost("/api/ws/admin/objects/create", {
+            title,
+            price,
+            rarity,
+            image_url,
+            is_active
+          }, true);
+
+          if (data.ok) okCount++;
+          else errCount++;
+        } catch {
+          errCount++;
+        }
+      }
+
+      await loadObjects();
+      showStatus("bulkObjectsMsg", `Создано: ${okCount}, ошибок: ${errCount}`, errCount ? "error" : "success");
+    }
+
     // ================= ROULETTE PRIZES =================
 
     async function loadRoulettePrizesAdmin() {
@@ -2753,6 +3081,7 @@
         const { data } = await apiGet("/api/ws/admin/objects", true);
         if (!data.ok) return;
         objects = Array.isArray(data.items) ? data.items : objects;
+        renderRouletteBulkObjectsList();
       } catch {}
     }
 
@@ -2785,6 +3114,84 @@
         el.onclick = () => selectRoulettePrize(item.id);
         wrap.appendChild(el);
       });
+    }
+
+    function renderRouletteBulkObjectsList() {
+      const wrap = document.getElementById("rouletteBulkObjectsList");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+
+      objects.forEach(item => {
+        const selected = selectedRouletteBulkObjectIds.has(Number(item.id));
+        const el = document.createElement("div");
+        el.className = "mini-card" + (selected ? " active" : "");
+        el.innerHTML = `
+          <input class="mini-card-check" type="checkbox" ${selected ? "checked" : ""} />
+          <div class="mini-card-content">
+            <div class="mini-card-title">${escapeHtml(item.title || "Без названия")}</div>
+            <div class="mini-card-meta">id: ${item.id} · rarity: ${escapeHtml(item.rarity || "Обычный")}</div>
+          </div>
+        `;
+
+        const checkbox = el.querySelector("input");
+        checkbox.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleRouletteBulkObject(item.id);
+        });
+
+        el.onclick = () => toggleRouletteBulkObject(item.id);
+        wrap.appendChild(el);
+      });
+    }
+
+    function toggleRouletteBulkObject(id) {
+      const n = Number(id);
+      if (selectedRouletteBulkObjectIds.has(n)) selectedRouletteBulkObjectIds.delete(n);
+      else selectedRouletteBulkObjectIds.add(n);
+      renderRouletteBulkObjectsList();
+    }
+
+    async function bulkCreateRouletteFromObjects() {
+      showStatus("rouletteBulkMsg", "", "");
+
+      if (!selectedRouletteBulkObjectIds.size) {
+        showStatus("rouletteBulkMsg", "Сначала выбери предметы", "error");
+        return;
+      }
+
+      const value = Math.max(1, Number(document.getElementById("rouletteBulkValue").value || 1));
+      const probability = Math.max(1, Number(document.getElementById("rouletteBulkProbability").value || 1));
+      let sortOrder = Math.max(0, Number(document.getElementById("rouletteBulkSortOrderStart").value || 0));
+
+      let okCount = 0;
+      let errCount = 0;
+
+      const selectedObjects = objects.filter(x => selectedRouletteBulkObjectIds.has(Number(x.id)));
+
+      for (const obj of selectedObjects) {
+        try {
+          const { data } = await apiPost("/api/ws/admin/roulette/prizes/create", {
+            title: obj.title || `Item ${obj.id}`,
+            type: "item",
+            value,
+            object_id: Number(obj.id),
+            image_url: obj.image_url || "",
+            icon: "🎁",
+            probability,
+            is_active: true,
+            sort_order: sortOrder
+          }, true);
+
+          if (data.ok) okCount++;
+          else errCount++;
+        } catch {
+          errCount++;
+        }
+        sortOrder++;
+      }
+
+      await loadRoulettePrizesAdmin();
+      showStatus("rouletteBulkMsg", `Добавлено призов: ${okCount}, ошибок: ${errCount}`, errCount ? "error" : "success");
     }
 
     function toggleRoulettePrizeFields() {
@@ -2956,6 +3363,393 @@
       }
     }
 
+    // ================= ONLINE =================
+
+    async function loadOnlineData() {
+      showStatus("onlineMsg", "", "");
+
+      try {
+        const [siteRes, psRes] = await Promise.all([
+          apiGet("/api/ws/presence/site-online", true),
+          apiGet("/api/ws/presence/ps-online", true)
+        ]);
+
+        if (!siteRes.data.ok) throw new Error(siteRes.data.error || "Ошибка загрузки site-online");
+        if (!psRes.data.ok) throw new Error(psRes.data.error || "Ошибка загрузки ps-online");
+
+        siteOnlineRows = Array.isArray(siteRes.data.items) ? siteRes.data.items : [];
+        psOnlineRows = Array.isArray(psRes.data.items) ? psRes.data.items : [];
+
+        document.getElementById("siteOnlineCount").textContent = Number(siteRes.data.count || siteOnlineRows.length);
+        document.getElementById("psOnlineCount").textContent = Number(psRes.data.count || psOnlineRows.length);
+        document.getElementById("onlineLastLoaded").textContent = new Date().toLocaleString("ru-RU");
+
+        renderOnlineLists();
+        showStatus("onlineMsg", "Онлайн обновлён", "success");
+      } catch (e) {
+        showStatus("onlineMsg", e.message, "error");
+      }
+    }
+
+    function renderOnlineLists() {
+      const siteWrap = document.getElementById("siteOnlineList");
+      const psWrap = document.getElementById("psOnlineList");
+
+      siteWrap.innerHTML = "";
+      psWrap.innerHTML = "";
+
+      siteOnlineRows.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "simple-item";
+        el.innerHTML = `
+          <div class="simple-item-title">${escapeHtml(item.nickname || item.login || "Без имени")}</div>
+          <div class="simple-item-meta">
+            player_id: ${Number(item.player_id || 0)} · role: ${escapeHtml(item.role || "user")}
+          </div>
+          <div class="simple-item-text mono">
+            login: ${escapeHtml(item.login || "")}
+            <br>updated_at: ${escapeHtml(item.updated_at || "—")}
+          </div>
+        `;
+        siteWrap.appendChild(el);
+      });
+
+      psOnlineRows.forEach(item => {
+        const el = document.createElement("div");
+        el.className = "simple-item";
+        el.innerHTML = `
+          <div class="simple-item-title">${escapeHtml(item.nick || "Без ника")}</div>
+          <div class="simple-item-meta">
+            server: ${escapeHtml(item.server_name || "Police Script")}
+          </div>
+          <div class="simple-item-text mono">
+            vk_id: ${item.vk_id ? Number(item.vk_id) : "—"}
+            <br>updated_at: ${escapeHtml(item.updated_at || "—")}
+          </div>
+        `;
+        psWrap.appendChild(el);
+      });
+    }
+
+    function toggleOnlineAutoRefresh() {
+      onlineAutoEnabled = !onlineAutoEnabled;
+
+      if (onlineAutoEnabled) {
+        if (onlineAutoTimer) clearInterval(onlineAutoTimer);
+        onlineAutoTimer = setInterval(() => {
+          if (currentMainSection === "online") loadOnlineData();
+        }, 15000);
+      } else {
+        if (onlineAutoTimer) clearInterval(onlineAutoTimer);
+        onlineAutoTimer = null;
+      }
+
+      document.getElementById("onlineAutoBtnText").textContent = `Авто: ${onlineAutoEnabled ? "вкл" : "выкл"}`;
+    }
+
+    // ================= PROFILE =================
+
+    async function loadMyWsProfile() {
+      showStatus("profileMsg", "", "");
+
+      try {
+        const { data } = await apiGet("/api/ws/profile-full", true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка загрузки профиля", "error");
+          return;
+        }
+
+        myProfileFull = data;
+        renderMyWsProfile();
+        await loadMyLinkCodes();
+        showStatus("profileMsg", "Профиль загружен", "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function loadMyLinkCodes() {
+      try {
+        const [codesRes, gameLinkRes] = await Promise.all([
+          apiGet("/api/ws/profile/link-codes", true),
+          apiGet("/api/ws/profile/game-link", true)
+        ]);
+
+        const codes = codesRes.data?.ok ? codesRes.data : null;
+        const gameLink = gameLinkRes.data?.ok ? gameLinkRes.data : null;
+
+        const wrap = document.getElementById("myLinkCodesBox");
+        if (!wrap) return;
+
+        wrap.innerHTML = `
+          <div><b>Привязка game:</b> ${gameLink ? (gameLink.linked ? "Да" : "Нет") : "—"}</div>
+          <div style="margin-top:6px;"><b>VK ID:</b> ${gameLink?.vk_id ?? "—"}</div>
+          <div style="margin-top:6px;"><b>Game nick:</b> ${escapeHtml(gameLink?.game_nick || "—")}</div>
+
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0;">
+
+          <div><b>VK-code:</b> <span class="mono">${escapeHtml(codes?.vk_code || "—")}</span></div>
+          <div style="margin-top:6px;"><b>VK expires:</b> ${escapeHtml(codes?.vk_expires_at || "—")}</div>
+
+          <div style="margin-top:10px;"><b>Nick-code:</b> <span class="mono">${escapeHtml(codes?.nick_code || "—")}</span></div>
+          <div style="margin-top:6px;"><b>Nick expires:</b> ${escapeHtml(codes?.nick_expires_at || "—")}</div>
+        `;
+      } catch {}
+    }
+
+    function renderMyWsProfile() {
+      const data = myProfileFull || {};
+      const user = data.user || {};
+      const binder = data.binder || {};
+      const inventory = Array.isArray(data.inventory) ? data.inventory : [];
+
+      const box = document.getElementById("myProfileBox");
+      box.innerHTML = `
+        <div class="row-flex">
+          <div class="object-thumb" style="width:80px;height:80px;border-radius:20px;">
+            ${user.avatar_url ? `<img src="${escapeHtml(user.avatar_url)}" alt="">` : "👤"}
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:22px;font-weight:900;">${escapeHtml(user.nickname || user.login || "Пользователь")}</div>
+            <div class="muted" style="margin-top:4px;">login: ${escapeHtml(user.login || "—")}</div>
+            <div class="tool-row" style="margin-top:10px;margin-bottom:0;">
+              <span class="chip cyan">role: ${escapeHtml(user.role || "user")}</span>
+              <span class="chip ${user.vk_id ? "green" : "red"}">${user.vk_id ? "VK привязан" : "VK не привязан"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px;"><b>ID:</b> ${Number(user.id || 0)}</div>
+        <div style="margin-top:6px;"><b>VK ID:</b> ${user.vk_id ?? "—"}</div>
+        <div style="margin-top:6px;"><b>Game nick:</b> ${escapeHtml(user.game_nick || "—")}</div>
+        <div style="margin-top:6px;"><b>Game balance:</b> ${Number(binder.game_balance || 0)}</div>
+        <div style="margin-top:6px;"><b>To output:</b> ${Number(binder.to_output || 0)}</div>
+        <div style="margin-top:6px;"><b>profile_link_seen:</b> ${user.profile_link_seen ? "true" : "false"}</div>
+      `;
+
+      const invWrap = document.getElementById("myInventoryWrap");
+      invWrap.innerHTML = "";
+
+      if (!inventory.length) {
+        invWrap.innerHTML = `<div class="muted">Инвентарь пуст</div>`;
+        return;
+      }
+
+      inventory.forEach(row => {
+        const obj = row.object || {};
+        const el = document.createElement("div");
+        el.className = "inventory-card";
+        el.innerHTML = `
+          <div class="row-flex">
+            <div class="object-thumb">
+              ${obj.image_url ? `<img src="${escapeHtml(obj.image_url)}" alt="">` : "📦"}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div class="simple-item-title">${escapeHtml(obj.title || "Без названия")}</div>
+              <div class="simple-item-meta">object_id: ${Number(row.object_id || 0)} · count: ${Number(row.count || 0)}</div>
+              <div class="tool-row" style="margin-bottom:0;">
+                <span class="chip cyan">${escapeHtml(obj.rarity || "Обычный")}</span>
+                <span class="chip">${escapeHtml(row.source || "shop")}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        invWrap.appendChild(el);
+      });
+    }
+
+    async function loadMyWsUtilities() {
+      try {
+        const [bonusRes, chestStatusRes, chestHistoryRes, rouletteLimitsRes] = await Promise.all([
+          apiGet("/api/ws/bonus/status", true),
+          apiGet("/api/ws/chest/status", true),
+          apiGet("/api/ws/chest/history", true),
+          apiGet("/api/ws/roulette/limits", true)
+        ]);
+
+        const bonus = bonusRes.data?.ok ? bonusRes.data : null;
+        const chestStatus = chestStatusRes.data?.ok ? chestStatusRes.data : null;
+        const chestHistory = chestHistoryRes.data?.ok ? chestHistoryRes.data : null;
+        const rouletteLimits = rouletteLimitsRes.data?.ok ? rouletteLimitsRes.data : null;
+
+        const wrap = document.getElementById("myUtilitiesBox");
+        wrap.innerHTML = `
+          <div class="section-title" style="font-size:16px;">Бонус</div>
+          <div><b>can_claim:</b> ${bonus ? (bonus.can_claim ? "true" : "false") : "—"}</div>
+          <div style="margin-top:6px;"><b>to_output:</b> ${bonus ? Number(bonus.to_output || 0) : "—"}</div>
+          <div style="margin-top:6px;"><b>next_claim_at:</b> ${escapeHtml(bonus?.next_claim_at || "—")}</div>
+          <button class="btn small green" style="margin-top:10px;" onclick="claimMyBonus()">Получить бонус</button>
+
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0;">
+
+          <div class="section-title" style="font-size:16px;">Сундук</div>
+          <div><b>can_open:</b> ${chestStatus ? (chestStatus.can_open ? "true" : "false") : "—"}</div>
+          <div style="margin-top:6px;"><b>streak:</b> ${chestStatus ? Number(chestStatus.streak || 0) : "—"}</div>
+          <div style="margin-top:6px;"><b>stage:</b> ${escapeHtml(chestStatus?.stage || "—")}</div>
+          <div style="margin-top:6px;"><b>next_claim_at:</b> ${escapeHtml(chestStatus?.next_claim_at || "—")}</div>
+          <button class="btn small yellow" style="margin-top:10px;" onclick="openMyChest()">Открыть сундук</button>
+
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0;">
+
+          <div class="section-title" style="font-size:16px;">Рулетка</div>
+          <div><b>used:</b> ${rouletteLimits ? Number(rouletteLimits.used || 0) : "—"}</div>
+          <div style="margin-top:6px;"><b>max:</b> ${rouletteLimits ? Number(rouletteLimits.max || 0) : "—"}</div>
+          <div style="margin-top:6px;"><b>left:</b> ${rouletteLimits ? Number(rouletteLimits.left || 0) : "—"}</div>
+          <button class="btn small pink" style="margin-top:10px;" onclick="spinMyRoulette()">Крутить рулетку</button>
+
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,.08);margin:12px 0;">
+
+          <div class="section-title" style="font-size:16px;">Последняя история сундука</div>
+          <div class="mono">${Array.isArray(chestHistory?.items) && chestHistory.items.length
+            ? chestHistory.items.slice(0,5).map(x => `${escapeHtml(x.reward_title || "")} · day ${Number(x.day_number || 0)} · ${escapeHtml(x.created_at || "")}`).join("<br>")
+            : "Нет записей"}</div>
+        `;
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function generateWsLinkCode() {
+      try {
+        const { data } = await apiPost("/api/ws/profile/generate-link-code", {}, true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка генерации кода", "error");
+          return;
+        }
+        showStatus("profileMsg", `Общий link-code: ${data.code}`, "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function generateVkLinkCode() {
+      try {
+        const { data } = await apiPost("/api/ws/profile/generate-vk-link-code", {}, true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка генерации VK-кода", "error");
+          return;
+        }
+        await loadMyLinkCodes();
+        showStatus("profileMsg", `VK-code: ${data.code}`, "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function generateNickLinkCode() {
+      try {
+        const { data } = await apiPost("/api/ws/profile/generate-nick-link-code", {}, true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка генерации Nick-кода", "error");
+          return;
+        }
+        await loadMyLinkCodes();
+        showStatus("profileMsg", `Nick-code: ${data.code}`, "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function markLinkSeen() {
+      try {
+        const { data } = await apiPost("/api/ws/profile/mark-link-seen", {}, true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка mark-link-seen", "error");
+          return;
+        }
+        await loadMyWsProfile();
+        showStatus("profileMsg", "profile_link_seen обновлён", "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function unlinkMyGame() {
+      if (!confirm("Отвязать игровой профиль?")) return;
+
+      try {
+        const { data } = await apiPost("/api/ws/profile/unlink-game", {}, true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка отвязки", "error");
+          return;
+        }
+        await loadMyWsProfile();
+        showStatus("profileMsg", "Игровой профиль отвязан", "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function claimMyBonus() {
+      try {
+        const { data } = await apiPost("/api/ws/bonus/claim", {}, true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка получения бонуса", "error");
+          return;
+        }
+        await loadMyWsProfile();
+        await loadMyWsUtilities();
+        showStatus("profileMsg", `Бонус получен: ${Number(data.amount || 0)}`, "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function openMyChest() {
+      try {
+        const { data } = await apiPost("/api/ws/chest/open", {}, true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка открытия сундука", "error");
+          return;
+        }
+        await loadMyWsProfile();
+        await loadMyWsUtilities();
+        showStatus("profileMsg", `Сундук открыт: ${data.reward?.title || "награда"}`, "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function spinMyRoulette() {
+      try {
+        const { data } = await apiPost("/api/ws/roulette/spin", {}, true);
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка рулетки", "error");
+          return;
+        }
+        await loadMyWsProfile();
+        await loadMyWsUtilities();
+        showStatus("profileMsg", `Рулетка: ${data.prize?.title || "приз"}`, "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
+    async function uploadMyAvatar() {
+      if (!uploadedMyAvatarBase64) {
+        showStatus("profileMsg", "Сначала выбери файл аватара", "error");
+        return;
+      }
+
+      try {
+        const { data } = await apiPost("/api/ws/profile/upload-avatar", {
+          image_base64: uploadedMyAvatarBase64
+        }, true);
+
+        if (!data.ok) {
+          showStatus("profileMsg", data.error || "Ошибка загрузки аватара", "error");
+          return;
+        }
+
+        uploadedMyAvatarBase64 = "";
+        document.getElementById("myAvatarPreview").classList.add("hidden");
+        await loadMyWsProfile();
+        showStatus("profileMsg", "Аватар обновлён", "success");
+      } catch (e) {
+        showStatus("profileMsg", e.message, "error");
+      }
+    }
+
     // ================= FILE INPUTS =================
 
     document.getElementById("objectImageFile").addEventListener("change", async (e) => {
@@ -2986,6 +3780,20 @@
       reader.readAsDataURL(file);
     });
 
+    document.getElementById("myAvatarFile").addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        uploadedMyAvatarBase64 = String(reader.result || "");
+        const img = document.getElementById("myAvatarPreview");
+        img.src = uploadedMyAvatarBase64;
+        img.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+
     [
       "objectTitle","objectPrice","objectRarity","objectImageUrl","objectIsActive"
     ].forEach(id => {
@@ -3006,6 +3814,22 @@
         el.addEventListener("input", () => renderRoulettePreview(null));
         el.addEventListener("change", () => renderRoulettePreview(null));
       });
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const loginPassword = document.getElementById("loginPassword");
+      if (loginPassword) {
+        loginPassword.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") adminLogin();
+        });
+      }
+
+      const adminVkCode = document.getElementById("adminVkCode");
+      if (adminVkCode) {
+        adminVkCode.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") confirmAdminVkCode();
+        });
+      }
     });
 
     async function bootstrap() {
