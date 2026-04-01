@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>World Script · Департаменты</title>
+  <style>
+    :root{
+      --bg:#f4f7f5;
+      --bg-2:#edf3ef;
+      --panel:#ffffff;
+      --panel-2:#f7faf8;
+      --line:#d9e6de;
+      --line-2:#c9dbd0;
+      --text:#10221a;
+      --muted:#5f7b6c;
+      --green:#3ecf8e;
+      --green-2:#2fa86f;
+      --blue:#42a5f5;
+      --blue-2:#2f7fd1;
+      --yellow:#f6b93b;
+      --yellow-2:#d29a25;
+      --red:#ef5f72;
+      --red-2:#d94d60;
+      --violet:#8f7cff;
+      --violet-2:#715fdc;
+      --shadow:0 20px 50px rgba(16,34,26,.08);
+      --radius:22px;
+      --radius-sm:16px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg-2));color:var(--text)}
+    body{min-height:100vh}
+
+    .hidden{display:none!important}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+    .page{
+      max-width:1600px;
+      margin:0 auto;
+      padding:24px;
+      display:grid;
+      gap:18px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:22px 24px;
+      border-radius:28px;
+      background:linear-gradient(180deg,#ffffff,#f7faf8);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      min-width:0;
+    }
+
+    .brand-badge{
+      width:58px;
+      height:58px;
+      min-width:58px;
+      border-radius:18px;
+      background:linear-gradient(135deg,rgba(62,207,142,.16),rgba(66,165,245,.14));
+      border:1px solid rgba(62,207,142,.18);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:24px;
+      font-weight:900;
+      color:#103625;
+      box-shadow:0 12px 28px rgba(62,207,142,.12);
+    }
+
+    .brand-title{
+      font-size:34px;
+      font-weight:900;
+      letter-spacing:-.05em;
+      line-height:1;
+      margin-bottom:6px;
+    }
+
+    .brand-sub{
+      font-size:14px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      padding:10px 14px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid var(--line);
+      background:#f7faf8;
+      color:#123224;
+    }
+
+    .chip.green{background:rgba(62,207,142,.10);border-color:rgba(62,207,142,.18);color:#13663e}
+    .chip.blue{background:rgba(66,165,245,.10);border-color:rgba(66,165,245,.18);color:#14568f}
+    .chip.yellow{background:rgba(246,185,59,.10);border-color:rgba(246,185,59,.18);color:#865a00}
+    .chip.red{background:rgba(239,95,114,.10);border-color:rgba(239,95,114,.18);color:#8f2133}
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      border-radius:14px;
+      padding:11px 14px;
+      font-weight:800;
+      font-size:13px;
+      color:white;
+      transition:.18s ease;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn.green{background:linear-gradient(180deg,var(--green),var(--green-2))}
+    .btn.blue{background:linear-gradient(180deg,var(--blue),var(--blue-2))}
+    .btn.yellow{background:linear-gradient(180deg,var(--yellow),var(--yellow-2));color:#2a1a00}
+    .btn.ghost{
+      background:#f7faf8;
+      color:var(--text);
+      border:1px solid var(--line);
+    }
+
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .tab-btn{
+      border:none;
+      cursor:pointer;
+      border-radius:16px;
+      padding:13px 18px;
+      font-size:14px;
+      font-weight:800;
+      color:var(--text);
+      background:#f7faf8;
+      border:1px solid var(--line);
+      transition:.18s ease;
+    }
+
+    .tab-btn:hover{
+      transform:translateY(-1px);
+      border-color:var(--line-2);
+      background:#ffffff;
+    }
+
+    .tab-btn.active{
+      background:linear-gradient(180deg,rgba(62,207,142,.16),rgba(66,165,245,.12));
+      border-color:rgba(62,207,142,.22);
+      box-shadow:0 12px 26px rgba(62,207,142,.08);
+    }
+
+    .tab-panel{display:none}
+    .tab-panel.active{display:grid;gap:18px}
+
+    .grid{
+      display:grid;
+      gap:18px;
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:18px;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:18px;
+    }
+
+    .panel{
+      border-radius:26px;
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .panel-head{
+      padding:18px 22px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .panel-title{
+      font-size:20px;
+      font-weight:900;
+      letter-spacing:-.03em;
+    }
+
+    .panel-sub{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:4px;
+    }
+
+    .panel-body{
+      padding:20px 22px;
+    }
+
+    .tool-row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .field,.select{
+      width:100%;
+      border:none;
+      outline:none;
+      border-radius:14px;
+      padding:12px 14px;
+      color:var(--text);
+      background:#ffffff;
+      border:1px solid var(--line);
+      font-size:14px;
+    }
+
+    .field:focus,.select:focus{
+      border-color:rgba(62,207,142,.24);
+      box-shadow:0 0 0 3px rgba(62,207,142,.08);
+    }
+
+    .label{
+      display:block;
+      font-size:12px;
+      font-weight:800;
+      color:#5d7a6c;
+      margin-bottom:8px;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+    }
+
+    .stat-card{
+      padding:20px;
+      border-radius:18px;
+      background:#f8fbf9;
+      border:1px solid var(--line);
+    }
+
+    .stat-label{
+      font-size:12px;
+      text-transform:uppercase;
+      font-weight:800;
+      color:var(--muted);
+      letter-spacing:.06em;
+      margin-bottom:10px;
+    }
+
+    .stat-value{
+      font-size:34px;
+      font-weight:900;
+      letter-spacing:-.04em;
+      line-height:1;
+    }
+
+    .stat-extra{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:8px;
+      line-height:1.5;
+    }
+
+    .list{
+      display:grid;
+      gap:10px;
+      max-height:720px;
+      overflow:auto;
+      padding-right:4px;
+    }
+
+    .item{
+      padding:14px 16px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:#fbfdfc;
+      transition:.18s ease;
+    }
+
+    .item:hover{
+      transform:translateY(-1px);
+      border-color:var(--line-2);
+      background:#ffffff;
+    }
+
+    .item-title{
+      font-size:15px;
+      font-weight:800;
+      line-height:1.35;
+      margin-bottom:4px;
+      word-break:break-word;
+    }
+
+    .item-meta{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.55;
+      margin-bottom:8px;
+    }
+
+    .item-text{
+      font-size:13px;
+      color:#1f3a2c;
+      line-height:1.7;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+
+    .summary-wrap{
+      display:grid;
+      gap:10px;
+    }
+
+    .summary-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:#f9fcfa;
+      border:1px solid var(--line);
+    }
+
+    .summary-name{
+      font-size:13px;
+      font-weight:700;
+      color:#1a3227;
+    }
+
+    .summary-value{
+      font-size:14px;
+      font-weight:900;
+      color:#103625;
+    }
+
+    .empty{
+      padding:18px;
+      border-radius:18px;
+      border:1px dashed var(--line-2);
+      color:var(--muted);
+      text-align:center;
+      line-height:1.7;
+      background:#fafdfb;
+    }
+
+    .small-note{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    @media (max-width: 1200px){
+      .grid-2,.grid-3{grid-template-columns:1fr}
+      .topbar{padding:18px}
+      .brand-title{font-size:28px}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge">WS</div>
+        <div>
+          <div class="brand-title">Департаменты</div>
+          <div class="brand-sub">История фракций, активность сотрудников и онлайн департаментов</div>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <span class="chip blue">Автообновление: 15 сек</span>
+        <button class="btn ghost" onclick="manualRefreshAll()">Обновить</button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button id="tabBtn-history" class="tab-btn active" onclick="switchTab('history')">История фракции</button>
+      <button id="tabBtn-activity" class="tab-btn" onclick="switchTab('activity')">Активность департаментов</button>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <section id="tab-history" class="tab-panel active">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Логи фракции</div>
+              <div class="panel-sub">Фильтрация по департаменту, дате и периоду</div>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="tool-row">
+              <select id="historyDept" class="select" style="max-width:180px;">
+                <option value="LSPD">LSPD</option>
+                <option value="SFPD">SFPD</option>
+                <option value="LVPD">LVPD</option>
+              </select>
+
+              <select id="historyMode" class="select" style="max-width:180px;" onchange="toggleHistoryMode()">
+                <option value="day">За день</option>
+                <option value="month">За месяц</option>
+              </select>
+
+              <input id="historyDate" type="date" class="field" style="max-width:180px;">
+              <input id="historyMonth" type="month" class="field hidden" style="max-width:180px;">
+
+              <button class="btn green" onclick="loadFactionHistory()">Применить</button>
+            </div>
+
+            <div id="historyList" class="list"></div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Сводка по событиям</div>
+                <div class="panel-sub">Автоматический подсчёт основных действий</div>
+              </div>
+            </div>
+
+            <div class="panel-body">
+              <div class="grid-3">
+                <div class="stat-card">
+                  <div class="stat-label">Повышения</div>
+                  <div id="summaryPromoted" class="stat-value">0</div>
+                  <div class="stat-extra">Повысили ранг</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">Приняты</div>
+                  <div id="summaryAccepted" class="stat-value">0</div>
+                  <div class="stat-extra">Приняты в организацию</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">Уволены / выгнаны</div>
+                  <div id="summaryFired" class="stat-value">0</div>
+                  <div class="stat-extra">Увольнения и изгнания</div>
+                </div>
+              </div>
+
+              <div class="grid-3" style="margin-top:18px;">
+                <div class="stat-card">
+                  <div class="stat-label">Покинули сами</div>
+                  <div id="summaryLeft" class="stat-value">0</div>
+                  <div class="stat-extra">Самостоятельный выход</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">Лидерство</div>
+                  <div id="summaryLeadership" class="stat-value">0</div>
+                  <div class="stat-extra">Назначения / снятия</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-label">Всего логов</div>
+                  <div id="summaryTotal" class="stat-value">0</div>
+                  <div class="stat-extra">Записей за период</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Последнее обновление</div>
+                <div class="panel-sub">Текущее состояние истории</div>
+              </div>
+            </div>
+
+            <div class="panel-body">
+              <div class="summary-wrap">
+                <div class="summary-row">
+                  <div class="summary-name">Департамент</div>
+                  <div id="historyCurrentDept" class="summary-value">—</div>
+                </div>
+                <div class="summary-row">
+                  <div class="summary-name">Режим</div>
+                  <div id="historyCurrentMode" class="summary-value">—</div>
+                </div>
+                <div class="summary-row">
+                  <div class="summary-name">Период</div>
+                  <div id="historyCurrentPeriod" class="summary-value">—</div>
+                </div>
+                <div class="summary-row">
+                  <div class="summary-name">Обновлено</div>
+                  <div id="historyLastUpdated" class="summary-value">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIVITY TAB -->
+    <section id="tab-activity" class="tab-panel">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Активность департаментов</div>
+              <div class="panel-sub">Текущий и средний онлайн по последней неделе</div>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="grid-3">
+              <div class="stat-card">
+                <div class="stat-label">LSPD</div>
+                <div id="deptCurrentLspd" class="stat-value">0</div>
+                <div id="deptAvgLspd" class="stat-extra">Средний онлайн: 0</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">SFPD</div>
+                <div id="deptCurrentSfpd" class="stat-value">0</div>
+                <div id="deptAvgSfpd" class="stat-extra">Средний онлайн: 0</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">LVPD</div>
+                <div id="deptCurrentLvpd" class="stat-value">0</div>
+                <div id="deptAvgLvpd" class="stat-extra">Средний онлайн: 0</div>
+              </div>
+            </div>
+
+            <div style="margin-top:18px;" class="grid-3">
+              <div class="stat-card">
+                <div class="stat-label">Максимум за неделю</div>
+                <div id="deptPeakWeek" class="stat-value">0</div>
+                <div class="stat-extra">Пиковый онлайн среди департаментов</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Всего снимков</div>
+                <div id="deptTotalSnapshots" class="stat-value">0</div>
+                <div class="stat-extra">Сохранённые замеры</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Обновлено</div>
+                <div id="deptLastUpdated" class="stat-value" style="font-size:20px;">—</div>
+                <div class="stat-extra">Автоматически обновляется</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Последние снимки онлайна</div>
+              <div class="panel-sub">Сырые записи по департаментам</div>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="tool-row">
+              <select id="activityDeptFilter" class="select" style="max-width:180px;">
+                <option value="">Все департаменты</option>
+                <option value="LSPD">LSPD</option>
+                <option value="SFPD">SFPD</option>
+                <option value="LVPD">LVPD</option>
+              </select>
+
+              <button class="btn green" onclick="loadDepartmentsActivity()">Применить</button>
+            </div>
+
+            <div id="activitySnapshotsList" class="list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API_BASE = "https://world-script-api.onrender.com";
+
+    let currentTab = "history";
+    let autoTimer = null;
+
+    let historyRows = [];
+    let activityRows = [];
+    let activityStats = null;
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function apiGet(path) {
+      const res = await fetch(API_BASE + path, {
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+
+      const text = await res.text();
+      let data = null;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error("Сервер вернул не JSON");
+      }
+
+      return { res, data };
+    }
+
+    function switchTab(name) {
+      currentTab = name;
+
+      ["history", "activity"].forEach(tab => {
+        document.getElementById("tabBtn-" + tab).classList.toggle("active", tab === name);
+        document.getElementById("tab-" + tab).classList.toggle("active", tab === name);
+      });
+
+      if (name === "history") loadFactionHistory();
+      if (name === "activity") loadDepartmentsActivity();
+    }
+
+    function toggleHistoryMode() {
+      const mode = document.getElementById("historyMode").value;
+      document.getElementById("historyDate").classList.toggle("hidden", mode !== "day");
+      document.getElementById("historyMonth").classList.toggle("hidden", mode !== "month");
+    }
+
+    function countHistorySummary(rows) {
+      const textRows = Array.isArray(rows) ? rows : [];
+
+      let promoted = 0;
+      let accepted = 0;
+      let fired = 0;
+      let left = 0;
+      let leadership = 0;
+
+      for (const row of textRows) {
+        const text = String(row.log_text || "").toLowerCase();
+
+        if (text.includes("повысил ранг")) promoted++;
+        if (text.includes("принял приглашение в организацию")) accepted++;
+        if (text.includes("выгнал")) fired++;
+        if (text.includes("покинул организацию")) left++;
+        if (text.includes("лидером фракции") || text.includes("лидерство фракции")) leadership++;
+      }
+
+      return {
+        promoted,
+        accepted,
+        fired,
+        left,
+        leadership,
+        total: textRows.length
+      };
+    }
+
+    function renderHistorySummary(rows) {
+      const s = countHistorySummary(rows);
+
+      document.getElementById("summaryPromoted").textContent = s.promoted;
+      document.getElementById("summaryAccepted").textContent = s.accepted;
+      document.getElementById("summaryFired").textContent = s.fired;
+      document.getElementById("summaryLeft").textContent = s.left;
+      document.getElementById("summaryLeadership").textContent = s.leadership;
+      document.getElementById("summaryTotal").textContent = s.total;
+    }
+
+    function renderHistoryList(rows) {
+      const wrap = document.getElementById("historyList");
+      wrap.innerHTML = "";
+
+      if (!rows.length) {
+        wrap.innerHTML = `<div class="empty">Логи за выбранный период не найдены</div>`;
+        return;
+      }
+
+      rows.forEach(row => {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="item-title">${escapeHtml(row.log_time_text || "—")}</div>
+          <div class="item-meta">${escapeHtml(row.department_tag || "—")} · ${escapeHtml(row.player_nick || "—")}</div>
+          <div class="item-text">${escapeHtml(row.log_text || "")}</div>
+        `;
+        wrap.appendChild(el);
+      });
+    }
+
+    async function loadFactionHistory() {
+      try {
+        const dept = document.getElementById("historyDept").value;
+        const mode = document.getElementById("historyMode").value;
+        const date = document.getElementById("historyDate").value;
+        const month = document.getElementById("historyMonth").value;
+
+        let query = `/api/ws/public/faction-history?department=${encodeURIComponent(dept)}&mode=${encodeURIComponent(mode)}`;
+
+        if (mode === "day" && date) query += `&date=${encodeURIComponent(date)}`;
+        if (mode === "month" && month) query += `&month=${encodeURIComponent(month)}`;
+
+        const { data } = await apiGet(query);
+        if (!data.ok) throw new Error(data.error || "Ошибка загрузки истории");
+
+        historyRows = Array.isArray(data.items) ? data.items : [];
+        renderHistoryList(historyRows);
+        renderHistorySummary(historyRows);
+
+        document.getElementById("historyCurrentDept").textContent = dept;
+        document.getElementById("historyCurrentMode").textContent = mode === "day" ? "За день" : "За месяц";
+        document.getElementById("historyCurrentPeriod").textContent =
+          mode === "day" ? (date || "сегодня") : (month || "текущий месяц");
+        document.getElementById("historyLastUpdated").textContent = new Date().toLocaleString("ru-RU");
+      } catch (e) {
+        document.getElementById("historyList").innerHTML = `<div class="empty">${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    function renderActivityOverview(stats) {
+      const s = stats || {};
+
+      document.getElementById("deptCurrentLspd").textContent = Number(s.current?.LSPD || 0);
+      document.getElementById("deptCurrentSfpd").textContent = Number(s.current?.SFPD || 0);
+      document.getElementById("deptCurrentLvpd").textContent = Number(s.current?.LVPD || 0);
+
+      document.getElementById("deptAvgLspd").textContent = `Средний онлайн: ${Number(s.average?.LSPD || 0).toFixed(1)}`;
+      document.getElementById("deptAvgSfpd").textContent = `Средний онлайн: ${Number(s.average?.SFPD || 0).toFixed(1)}`;
+      document.getElementById("deptAvgLvpd").textContent = `Средний онлайн: ${Number(s.average?.LVPD || 0).toFixed(1)}`;
+
+      document.getElementById("deptPeakWeek").textContent = Number(s.peak_online || 0);
+      document.getElementById("deptTotalSnapshots").textContent = Number(s.total_snapshots || 0);
+      document.getElementById("deptLastUpdated").textContent = new Date().toLocaleTimeString("ru-RU");
+    }
+
+    function renderActivitySnapshots(rows) {
+      const wrap = document.getElementById("activitySnapshotsList");
+      wrap.innerHTML = "";
+
+      if (!rows.length) {
+        wrap.innerHTML = `<div class="empty">Снимки активности не найдены</div>`;
+        return;
+      }
+
+      rows.forEach(row => {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div class="item-title">${escapeHtml(row.department_tag || "—")} · Онлайн: ${Number(row.online_count || 0)}</div>
+          <div class="item-meta">
+            Игрок: ${escapeHtml(row.player_nick || "—")}<br>
+            Дата: ${escapeHtml(row.created_at || "—")}
+          </div>
+        `;
+        wrap.appendChild(el);
+      });
+    }
+
+    async function loadDepartmentsActivity() {
+      try {
+        const dept = document.getElementById("activityDeptFilter").value;
+
+        const [statsRes, snapshotsRes] = await Promise.all([
+          apiGet("/api/ws/public/departments-activity/summary"),
+          apiGet(`/api/ws/public/departments-activity/snapshots?department=${encodeURIComponent(dept)}`)
+        ]);
+
+        if (!statsRes.data.ok) throw new Error(statsRes.data.error || "Ошибка загрузки сводки активности");
+        if (!snapshotsRes.data.ok) throw new Error(snapshotsRes.data.error || "Ошибка загрузки снимков активности");
+
+        activityStats = statsRes.data;
+        activityRows = Array.isArray(snapshotsRes.data.items) ? snapshotsRes.data.items : [];
+
+        renderActivityOverview(activityStats);
+        renderActivitySnapshots(activityRows);
+      } catch (e) {
+        document.getElementById("activitySnapshotsList").innerHTML = `<div class="empty">${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    async function manualRefreshAll() {
+      if (currentTab === "history") await loadFactionHistory();
+      if (currentTab === "activity") await loadDepartmentsActivity();
+    }
+
+    function startAutoRefresh() {
+      if (autoTimer) clearInterval(autoTimer);
+
+      autoTimer = setInterval(() => {
+        manualRefreshAll();
+      }, 15000);
+    }
+
+    function setDefaultDateFilters() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+
+      const dateEl = document.getElementById("historyDate");
+      const monthEl = document.getElementById("historyMonth");
+
+      if (dateEl) dateEl.value = `${yyyy}-${mm}-${dd}`;
+      if (monthEl) monthEl.value = `${yyyy}-${mm}`;
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      setDefaultDateFilters();
+      toggleHistoryMode();
+      await loadFactionHistory();
+      startAutoRefresh();
+    });
+  </script>
+</body>
+</html>
