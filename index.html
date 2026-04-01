@@ -558,6 +558,8 @@
         <button id="navObjectsBtn" class="nav-btn" onclick="switchMainSection('objects')">📦 Предметы</button>
         <button id="navRouletteBtn" class="nav-btn" onclick="switchMainSection('roulette')">🎰 Рулетка</button>
         <button id="navContractsBtn" class="nav-btn" onclick="switchMainSection('contracts')">🎯 Контракты</button>
+        <button id="navPaymentRequestsBtn" class="nav-btn" onclick="switchMainSection('paymentRequests')">💎 Заявки на Брюлики</button>
+        <button id="navContractsModerationBtn" class="nav-btn" onclick="switchMainSection('contractsModeration')">✅ Проверка контрактов</button>
         <button id="navOnlineBtn" class="nav-btn" onclick="switchMainSection('online')">📡 Онлайн</button>
         <button id="navProfileBtn" class="nav-btn" onclick="switchMainSection('profile')">🙍 Мой профиль</button>
       </div>
@@ -1939,6 +1941,118 @@
         </div>
       </section>
 
+      <!-- PAYMENT REQUESTS -->
+      <section id="paymentRequestsSection" class="grid hidden">
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Заявки на пополнение Брюликов</div>
+                <div class="panel-sub">Проверка и подтверждение оплат пользователей</div>
+              </div>
+            </div>
+
+            <div class="panel-body stack">
+              <div class="tool-row">
+                <input id="paymentRequestsSearch" class="field" placeholder="Поиск по коду / номеру счёта / игроку" style="min-width:240px;">
+                <select id="paymentRequestsStatusFilter" class="select" style="max-width:220px;">
+                  <option value="">Все статусы</option>
+                  <option value="pending_payment">pending_payment</option>
+                  <option value="waiting_check">waiting_check</option>
+                  <option value="confirmed">confirmed</option>
+                  <option value="rejected">rejected</option>
+                  <option value="cancelled">cancelled</option>
+                </select>
+                <button class="btn blue" onclick="loadPaymentRequestsAdmin()">Обновить</button>
+              </div>
+
+              <div id="paymentRequestsAdminList" class="list"></div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-title">Карточка заявки</div>
+                  <div class="panel-sub">Детали заявки и действия администратора</div>
+                </div>
+              </div>
+
+              <div class="panel-body stack">
+                <div id="paymentRequestAdminBox" class="muted">Выбери заявку слева</div>
+
+                <div>
+                  <label class="label">Комментарий администратора</label>
+                  <textarea id="paymentRequestAdminComment" class="textarea" placeholder="Причина подтверждения / отклонения"></textarea>
+                </div>
+
+                <div class="tool-row">
+                  <button class="btn green" onclick="confirmPaymentRequestAdmin()">Подтвердить заявку</button>
+                  <button class="btn red" onclick="rejectPaymentRequestAdmin()">Отклонить заявку</button>
+                </div>
+
+                <div id="paymentRequestsAdminMsg" class="status"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTRACTS MODERATION -->
+      <section id="contractsModerationSection" class="grid hidden">
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Контракты пользователей на проверке</div>
+                <div class="panel-sub">Проверка доказательств и модерация выполнения контрактов</div>
+              </div>
+            </div>
+
+            <div class="panel-body stack">
+              <div class="tool-row">
+                <select id="contractsModerationStatusFilter" class="select" style="max-width:220px;">
+                  <option value="">Все активные</option>
+                  <option value="in_progress">in_progress</option>
+                  <option value="available">available</option>
+                </select>
+                <button class="btn blue" onclick="loadContractsModeration()">Обновить</button>
+              </div>
+
+              <div id="contractsModerationList" class="list"></div>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <div class="panel-title">Карточка контракта</div>
+                  <div class="panel-sub">Просмотр описания, доказательств и решение администратора</div>
+                </div>
+              </div>
+
+              <div class="panel-body stack">
+                <div id="contractsModerationBox" class="muted">Выбери контракт слева</div>
+
+                <div>
+                  <label class="label">Комментарий администратора</label>
+                  <textarea id="contractsModerationAdminComment" class="textarea" placeholder="Например: принято, доказательства подтверждены"></textarea>
+                </div>
+
+                <div class="tool-row">
+                  <button class="btn green" onclick="approveModerationContract()">Одобрить контракт</button>
+                  <button class="btn red" onclick="rejectModerationContract()">Отклонить контракт</button>
+                </div>
+
+                <div id="contractsModerationMsg" class="status"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ONLINE -->
       <section id="onlineSection" class="grid hidden">
         <div class="grid-3">
@@ -2157,6 +2271,14 @@
 
   let contractsListRows = [];
   let contractSettingsMap = {};
+
+  let paymentRequestsAdmin = [];
+  let currentPaymentRequestId = null;
+  let currentPaymentRequestRow = null;
+  
+  let contractsModerationRows = [];
+  let currentModerationContractId = null;
+  let currentModerationContractFull = null;
 
   function token() {
     return localStorage.getItem(TOKEN_KEY) || "";
@@ -2445,7 +2567,9 @@
       roulette: ["Рулетка", "Обычные призы, очереди, комбо-призы и шансы."],
       contracts: ["Контракты", "Шаблоны, активные контракты, волны, настройки и массовые операции."],
       online: ["Онлайн", "Мониторинг онлайна сайта и PS, а также логи админки."],
-      profile: ["Мой профиль", "Личный профиль администратора, коды, аватар, бонусы и инвентарь."]
+      profile: ["Мой профиль", "Личный профиль администратора, коды, аватар, бонусы и инвентарь."],
+      paymentRequests: ["Заявки на Брюлики", "Проверка заявок пользователей на пополнение WSBuild."],
+      contractsModeration: ["Проверка контрактов", "Одобрение и отклонение контрактов пользователей с доказательствами."]
     };
 
     const data = map[name] || ["WORLD SCRIPT", "Админка"];
@@ -2457,7 +2581,7 @@
   function switchMainSection(name) {
     currentMainSection = name;
 
-    const sections = ["design", "reports", "finance", "users", "objects", "roulette", "contracts", "online", "profile"];
+    const sections = ["design", "reports", "finance", "users", "objects", "roulette", "contracts", "paymentRequests", "contractsModeration", "online", "profile"];
     sections.forEach(section => {
       const sec = document.getElementById(section + "Section");
       if (sec) sec.classList.toggle("hidden", section !== name);
@@ -2471,6 +2595,8 @@
       objects: "navObjectsBtn",
       roulette: "navRouletteBtn",
       contracts: "navContractsBtn",
+      paymentRequests: "navPaymentRequestsBtn",
+      contractsModeration: "navContractsModerationBtn",
       online: "navOnlineBtn",
       profile: "navProfileBtn"
     };
@@ -2499,6 +2625,10 @@
       await Promise.all([loadRoulettePrizesAdmin(), loadComboPrizesAdmin()]);
     } else if (currentMainSection === "contracts") {
       await Promise.all([loadContractTemplates(), loadContractsList(), loadContractSettings()]);
+    } else if (currentMainSection === "paymentRequests") {
+      await loadPaymentRequestsAdmin();
+    } else if (currentMainSection === "contractsModeration") {
+      await loadContractsModeration();
     } else if (currentMainSection === "online") {
       await Promise.all([loadOnlineData(), loadWsAdminLogs()]);
     } else if (currentMainSection === "profile") {
@@ -2535,6 +2665,139 @@
     }
   }
 
+
+  async function loadPaymentRequestsAdmin() {
+  try {
+    const search = document.getElementById("paymentRequestsSearch").value.trim();
+    const status = document.getElementById("paymentRequestsStatusFilter").value;
+
+    const { data } = await apiGet(
+      `/api/ws/admin/payment-requests/list?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`,
+      true
+    );
+
+    if (!data.ok) throw new Error(data.error || "Ошибка загрузки заявок");
+
+    paymentRequestsAdmin = Array.isArray(data.items) ? data.items : [];
+    renderPaymentRequestsAdminList();
+
+    if (paymentRequestsAdmin.length) {
+      const exists = paymentRequestsAdmin.find(x => Number(x.id) === Number(currentPaymentRequestId));
+      selectPaymentRequestAdmin(exists ? exists.id : paymentRequestsAdmin[0].id);
+    } else {
+      currentPaymentRequestId = null;
+      currentPaymentRequestRow = null;
+      renderPaymentRequestAdminBox();
+    }
+  } catch (e) {
+    showStatus("paymentRequestsAdminMsg", e.message, "error");
+  }
+}
+
+function renderPaymentRequestsAdminList() {
+  const wrap = document.getElementById("paymentRequestsAdminList");
+  wrap.innerHTML = "";
+
+  if (!paymentRequestsAdmin.length) {
+    wrap.innerHTML = `<div class="muted">Заявки не найдены</div>`;
+    return;
+  }
+
+  paymentRequestsAdmin.forEach(item => {
+    const active = Number(item.id) === Number(currentPaymentRequestId);
+    const el = document.createElement("div");
+    el.className = "item" + (active ? " active" : "");
+    el.innerHTML = `
+      <div class="item-title">#${Number(item.id || 0)} · ${Number(item.wsbuild_amount || 0)} Брюликов</div>
+      <div class="item-meta">
+        Игрок: ${escapeHtml(item.player_login || item.player_nick || "—")}<br>
+        Сумма: ${Number(item.amount_rub || 0)}₽<br>
+        Код: ${escapeHtml(item.payment_code || "—")}<br>
+        Статус: ${escapeHtml(item.status_text || item.status || "—")}
+      </div>
+    `;
+    el.onclick = () => selectPaymentRequestAdmin(item.id);
+    wrap.appendChild(el);
+  });
+}
+
+function selectPaymentRequestAdmin(id) {
+  currentPaymentRequestId = Number(id || 0);
+  currentPaymentRequestRow = paymentRequestsAdmin.find(x => Number(x.id) === currentPaymentRequestId) || null;
+  renderPaymentRequestsAdminList();
+  renderPaymentRequestAdminBox();
+}
+
+function renderPaymentRequestAdminBox() {
+  const box = document.getElementById("paymentRequestAdminBox");
+
+  if (!currentPaymentRequestRow) {
+    box.innerHTML = `<div class="muted">Выбери заявку слева</div>`;
+    return;
+  }
+
+  const row = currentPaymentRequestRow;
+  box.innerHTML = `
+    <div class="item-title">Заявка #${Number(row.id || 0)}</div>
+    <div class="item-meta">
+      Игрок: ${escapeHtml(row.player_login || row.player_nick || "—")}<br>
+      player_id: ${Number(row.player_id || 0)}<br>
+      account_number: ${Number(row.account_number || 0)}<br>
+      provider: ${escapeHtml(row.provider || "—")}<br>
+      amount_rub: ${Number(row.amount_rub || 0)}₽<br>
+      wsbuild_amount: ${Number(row.wsbuild_amount || 0)}<br>
+      payment_code: <span class="mono">${escapeHtml(row.payment_code || "—")}</span><br>
+      status: ${escapeHtml(row.status_text || row.status || "—")}<br>
+      created_at: ${escapeHtml(row.created_at || "—")}<br>
+      paid_marked_at: ${escapeHtml(row.paid_marked_at || "—")}<br>
+      confirmed_at: ${escapeHtml(row.confirmed_at || "—")}<br>
+      admin_comment: ${escapeHtml(row.admin_comment || "—")}
+    </div>
+  `;
+}
+
+async function confirmPaymentRequestAdmin() {
+  if (!currentPaymentRequestId) {
+    return showStatus("paymentRequestsAdminMsg", "Сначала выбери заявку", "error");
+  }
+
+  try {
+    const { data } = await apiPost("/api/ws/admin/payment-requests/confirm", {
+      request_id: currentPaymentRequestId,
+      admin_comment: document.getElementById("paymentRequestAdminComment").value.trim()
+    }, true);
+
+    if (!data.ok) throw new Error(data.error || "Ошибка подтверждения заявки");
+
+    showStatus("paymentRequestsAdminMsg", "Заявка подтверждена", "success");
+    await loadPaymentRequestsAdmin();
+  } catch (e) {
+    showStatus("paymentRequestsAdminMsg", e.message, "error");
+  }
+}
+
+async function rejectPaymentRequestAdmin() {
+  if (!currentPaymentRequestId) {
+    return showStatus("paymentRequestsAdminMsg", "Сначала выбери заявку", "error");
+  }
+
+  try {
+    const { data } = await apiPost("/api/ws/admin/payment-requests/reject", {
+      request_id: currentPaymentRequestId,
+      admin_comment: document.getElementById("paymentRequestAdminComment").value.trim()
+    }, true);
+
+    if (!data.ok) throw new Error(data.error || "Ошибка отклонения заявки");
+
+    showStatus("paymentRequestsAdminMsg", "Заявка отклонена", "success");
+    await loadPaymentRequestsAdmin();
+  } catch (e) {
+    showStatus("paymentRequestsAdminMsg", e.message, "error");
+  }
+}
+
+  
+
   async function loadSettings() {
     const { data } = await apiGet("/api/ws/settings", false);
     if (!data.ok) throw new Error(data.error || "Ошибка загрузки настроек");
@@ -2546,6 +2809,203 @@
     document.getElementById("settingSiteSubtitle").value = settingsMap.site_subtitle || "";
     document.getElementById("settingGuestDescription").value = settingsMap.guest_description || "";
   }
+
+
+
+
+  async function loadContractsModeration() {
+  try {
+    const status = document.getElementById("contractsModerationStatusFilter").value;
+
+    const { data } = await apiGet(
+      `/api/ws/admin/contracts/moderation-list?status=${encodeURIComponent(status)}`,
+      true
+    );
+
+    if (!data.ok) throw new Error(data.error || "Ошибка загрузки контрактов на проверку");
+
+    contractsModerationRows = Array.isArray(data.items) ? data.items : [];
+    renderContractsModerationList();
+
+    if (contractsModerationRows.length) {
+      const exists = contractsModerationRows.find(x => Number(x.id) === Number(currentModerationContractId));
+      await selectModerationContract(exists ? exists.id : contractsModerationRows[0].id);
+    } else {
+      currentModerationContractId = null;
+      currentModerationContractFull = null;
+      renderContractsModerationBox();
+    }
+  } catch (e) {
+    showStatus("contractsModerationMsg", e.message, "error");
+  }
+}
+
+function renderContractsModerationList() {
+  const wrap = document.getElementById("contractsModerationList");
+  wrap.innerHTML = "";
+
+  if (!contractsModerationRows.length) {
+    wrap.innerHTML = `<div class="muted">Контракты на проверке не найдены</div>`;
+    return;
+  }
+
+  contractsModerationRows.forEach(item => {
+    const active = Number(item.id) === Number(currentModerationContractId);
+    const el = document.createElement("div");
+    el.className = "item" + (active ? " active" : "");
+    el.innerHTML = `
+      <div class="item-title">${escapeHtml(item.title || "Без названия")}</div>
+      <div class="item-meta">
+        id: ${Number(item.id || 0)}<br>
+        status: ${escapeHtml(item.status || "—")}<br>
+        assigned_to_user_id: ${item.assigned_to_user_id ?? "—"}<br>
+        submitted_at: ${escapeHtml(item.submitted_at || "—")}
+      </div>
+      <div class="tool-row" style="margin-top:10px;margin-bottom:0;">
+        ${badgeContractStatus(item.status || "draft")}
+      </div>
+    `;
+    el.onclick = () => selectModerationContract(item.id);
+    wrap.appendChild(el);
+  });
+}
+
+async function selectModerationContract(id) {
+  currentModerationContractId = Number(id || 0);
+  renderContractsModerationList();
+
+  try {
+    const { data } = await apiGet(`/api/ws/contracts/${currentModerationContractId}`, true);
+    if (!data.ok) throw new Error(data.error || "Ошибка загрузки контракта");
+
+    currentModerationContractFull = data;
+    renderContractsModerationBox();
+  } catch (e) {
+    showStatus("contractsModerationMsg", e.message, "error");
+  }
+}
+
+function renderContractsModerationBox() {
+  const box = document.getElementById("contractsModerationBox");
+
+  if (!currentModerationContractFull?.item) {
+    box.innerHTML = `<div class="muted">Выбери контракт слева</div>`;
+    return;
+  }
+
+  const item = currentModerationContractFull.item || {};
+  const proofs = Array.isArray(currentModerationContractFull.proofs) ? currentModerationContractFull.proofs : [];
+  const history = Array.isArray(currentModerationContractFull.history) ? currentModerationContractFull.history : [];
+
+  box.innerHTML = `
+    <div class="item-title">${escapeHtml(item.title || "Контракт")}</div>
+    <div class="item-meta">
+      id: ${Number(item.id || 0)}<br>
+      status: ${escapeHtml(item.status || "—")}<br>
+      difficulty: ${Number(item.difficulty || 1)} · ${escapeHtml(difficultyStarsHtml(item.difficulty || 1))}<br>
+      reward_balance: ${formatMoney(item.reward_balance || 0)}<br>
+      reward_output: ${formatMoney(item.reward_output || 0)}<br>
+      assigned_to_user_id: ${item.assigned_to_user_id ?? "—"}<br>
+      taken_at: ${escapeHtml(item.taken_at || "—")}<br>
+      submitted_at: ${escapeHtml(item.submitted_at || "—")}<br>
+      expires_at: ${escapeHtml(item.expires_at || "—")}
+    </div>
+
+    <div class="item-text" style="margin-top:14px;">
+      <b>Описание:</b><br>${escapeHtml(item.description || "—")}
+    </div>
+
+    <div class="item-text" style="margin-top:14px;">
+      <b>Условия:</b><br>${escapeHtml(item.requirements_text || "—")}
+    </div>
+
+    <div style="margin-top:14px;">
+      <div class="panel-title" style="font-size:14px;margin-bottom:10px;">Доказательства</div>
+      ${
+        proofs.length
+          ? proofs.map(proof => `
+              <div class="queue-item" style="margin-bottom:10px;">
+                <div class="item-meta">
+                  proof_id: ${Number(proof.id || 0)} · user_id: ${proof.user_id ?? "—"} · created_at: ${escapeHtml(proof.created_at || "—")}
+                </div>
+                <div class="item-text" style="margin-top:8px;">
+                  ${escapeHtml(proof.proof_text || "—")}
+                </div>
+                ${proof.proof_image_url ? `<div class="item-meta" style="margin-top:8px;">image: ${escapeHtml(proof.proof_image_url)}</div>` : ""}
+                ${
+                  Array.isArray(proof.proof_links) && proof.proof_links.length
+                    ? `<div class="item-meta" style="margin-top:8px;">links:<br>${proof.proof_links.map(x => escapeHtml(x)).join("<br>")}</div>`
+                    : ""
+                }
+              </div>
+            `).join("")
+          : `<div class="muted">Доказательства не найдены</div>`
+      }
+    </div>
+
+    <div style="margin-top:14px;">
+      <div class="panel-title" style="font-size:14px;margin-bottom:10px;">История контракта</div>
+      ${
+        history.length
+          ? history.map(row => `
+              <div class="queue-item" style="margin-bottom:10px;">
+                <div class="item-title">${escapeHtml(row.action_type || "action")}</div>
+                <div class="item-meta">${escapeHtml(row.created_at || "")}</div>
+                <div class="item-text">${escapeHtml(row.action_text || "")}</div>
+              </div>
+            `).join("")
+          : `<div class="muted">История контракта пуста</div>`
+      }
+    </div>
+  `;
+}
+
+async function approveModerationContract() {
+  if (!currentModerationContractId) {
+    return showStatus("contractsModerationMsg", "Сначала выбери контракт", "error");
+  }
+
+  try {
+    const { data } = await apiPost("/api/ws/admin/contracts/complete", {
+      contract_id: currentModerationContractId,
+      admin_comment: document.getElementById("contractsModerationAdminComment").value.trim()
+    }, true);
+
+    if (!data.ok) throw new Error(data.error || "Ошибка подтверждения контракта");
+
+    showStatus("contractsModerationMsg", "Контракт одобрен", "success");
+    await loadContractsModeration();
+    await loadContractsList();
+  } catch (e) {
+    showStatus("contractsModerationMsg", e.message, "error");
+  }
+}
+
+async function rejectModerationContract() {
+  if (!currentModerationContractId) {
+    return showStatus("contractsModerationMsg", "Сначала выбери контракт", "error");
+  }
+
+  try {
+    const { data } = await apiPost("/api/ws/admin/contracts/cancel", {
+      contract_id: currentModerationContractId,
+      admin_comment: document.getElementById("contractsModerationAdminComment").value.trim()
+    }, true);
+
+    if (!data.ok) throw new Error(data.error || "Ошибка отклонения контракта");
+
+    showStatus("contractsModerationMsg", "Контракт отклонён", "success");
+    await loadContractsModeration();
+    await loadContractsList();
+  } catch (e) {
+    showStatus("contractsModerationMsg", e.message, "error");
+  }
+}
+
+
+
+
+  
 
   async function loadPhrases() {
     const { data } = await apiGet("/api/ws/glitch-phrases", false);
