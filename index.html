@@ -553,6 +553,7 @@
       <div class="nav">
         <button id="navDesignBtn" class="nav-btn active" onclick="switchMainSection('design')">🎨 Оформление</button>
         <button id="navReportsBtn" class="nav-btn" onclick="switchMainSection('reports')">📝 Репорты</button>
+        <button id="navNewsBtn" class="nav-btn" onclick="switchMainSection('news')">📰 Новости</button>
         <button id="navFinanceBtn" class="nav-btn" onclick="switchMainSection('finance')">💰 Финансы</button>
         <button id="navUsersBtn" class="nav-btn" onclick="switchMainSection('users')">👥 Пользователи</button>
         <button id="navObjectsBtn" class="nav-btn" onclick="switchMainSection('objects')">📦 Предметы</button>
@@ -1109,6 +1110,119 @@
           </div>
         </div>
       </section>
+
+
+      <section id="newsSection" class="grid hidden">
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Новости сайта</div>
+                <div class="panel-sub">Создание, редактирование и публикация новостей</div>
+              </div>
+              <button class="btn blue small" onclick="newNewsItem()">Новая новость</button>
+            </div>
+      
+            <div class="panel-body stack">
+              <div class="tool-row">
+                <button class="btn blue" onclick="loadNewsAdmin()">Обновить</button>
+              </div>
+              <div id="newsList" class="list"></div>
+            </div>
+          </div>
+      
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Редактор новости</div>
+                <div class="panel-sub">Текст, тип, обязательность и изображения</div>
+              </div>
+            </div>
+      
+            <div class="panel-body stack">
+              <div class="row">
+                <div>
+                  <label class="label">Заголовок</label>
+                  <input id="newsTitle" class="field" placeholder="Например: Важное обновление сайта">
+                </div>
+                <div>
+                  <label class="label">Тип</label>
+                  <select id="newsType" class="select">
+                    <option value="info">info</option>
+                    <option value="update">update</option>
+                    <option value="warning">warning</option>
+                    <option value="critical">critical</option>
+                  </select>
+                </div>
+              </div>
+      
+              <div>
+                <label class="label">Текст новости</label>
+                <textarea id="newsBody" class="textarea" placeholder="Подробный текст новости"></textarea>
+              </div>
+      
+              <div class="row">
+                <div>
+                  <label class="label">version_key</label>
+                  <input id="newsVersionKey" class="field" placeholder="Например: update_2026_04_06_1">
+                </div>
+                <div>
+                  <label class="label">Активность / обязательность</label>
+                  <div class="tool-row" style="margin:0;">
+                    <label class="chip blue"><input id="newsIsActive" type="checkbox" checked style="margin-right:8px;"> active</label>
+                    <label class="chip red"><input id="newsIsMandatory" type="checkbox" style="margin-right:8px;"> mandatory</label>
+                  </div>
+                </div>
+              </div>
+      
+              <div class="row">
+                <div>
+                  <label class="label">Текст кнопки</label>
+                  <input id="newsButtonText" class="field" placeholder="Например: Открыть">
+                </div>
+                <div>
+                  <label class="label">Ссылка кнопки</label>
+                  <input id="newsButtonUrl" class="field" placeholder="https://...">
+                </div>
+              </div>
+      
+              <div class="row">
+                <div>
+                  <label class="label">Основная картинка (URL)</label>
+                  <input id="newsMainImageUrl" class="field" placeholder="https://...">
+                </div>
+                <div>
+                  <label class="label">Загрузить основную картинку</label>
+                  <input id="newsMainImageFile" type="file" class="field" accept="image/*">
+                </div>
+              </div>
+      
+              <img id="newsMainImagePreview" class="preview-upload hidden" alt="news main preview">
+      
+              <div>
+                <label class="label">Галерея изображений (по одному URL на строке)</label>
+                <textarea id="newsGalleryImages" class="textarea" placeholder="https://...&#10;https://..."></textarea>
+              </div>
+      
+              <div>
+                <label class="label">Добавить картинку в галерею</label>
+                <input id="newsGalleryImageFile" type="file" class="field" accept="image/*">
+              </div>
+      
+              <div id="newsGalleryPreviewList" class="list"></div>
+      
+              <div class="tool-row">
+                <button class="btn blue" onclick="saveNewsItem()">Сохранить</button>
+                <button class="btn red" onclick="deleteNewsItem()">Удалить</button>
+                <button class="btn ghost" onclick="newNewsItem()">Очистить</button>
+              </div>
+      
+              <div id="newsMsg" class="status"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
 
       <!-- FINANCE -->
       <section id="financeSection" class="grid hidden">
@@ -2280,6 +2394,11 @@
   let currentModerationContractId = null;
   let currentModerationContractFull = null;
 
+  let newsItems = [];
+  let currentNewsId = null;
+  let uploadedNewsMainImageBase64 = "";
+  let uploadedNewsGalleryImageBase64 = "";
+
   function token() {
     return localStorage.getItem(TOKEN_KEY) || "";
   }
@@ -2569,6 +2688,7 @@
       online: ["Онлайн", "Мониторинг онлайна сайта и PS, а также логи админки."],
       profile: ["Мой профиль", "Личный профиль администратора, коды, аватар, бонусы и инвентарь."],
       paymentRequests: ["Заявки на Брюлики", "Проверка заявок пользователей на пополнение WSBuild."],
+      news: ["Новости", "Публикация обязательных и обычных новостей для пользователей сайта"],
       contractsModeration: ["Проверка контрактов", "Одобрение и отклонение контрактов пользователей с доказательствами."]
     };
 
@@ -2581,7 +2701,7 @@
   function switchMainSection(name) {
     currentMainSection = name;
 
-    const sections = ["design", "reports", "finance", "users", "objects", "roulette", "contracts", "paymentRequests", "contractsModeration", "online", "profile"];
+    const sections = ["design", "reports", "news", "finance", "users", "objects", "roulette", "contracts", "paymentRequests", "contractsModeration", "online", "profile"];
     sections.forEach(section => {
       const sec = document.getElementById(section + "Section");
       if (sec) sec.classList.toggle("hidden", section !== name);
@@ -2598,6 +2718,7 @@
       paymentRequests: "navPaymentRequestsBtn",
       contractsModeration: "navContractsModerationBtn",
       online: "navOnlineBtn",
+      news: "navNewsBtn",
       profile: "navProfileBtn"
     };
 
@@ -2633,6 +2754,8 @@
       await Promise.all([loadOnlineData(), loadWsAdminLogs()]);
     } else if (currentMainSection === "profile") {
       await Promise.all([loadMyWsProfile(), loadMyWsUtilities()]);
+    } else if (currentMainSection === "news") {
+      await loadNewsAdmin();
     }
   }
 
@@ -2664,6 +2787,262 @@
       selectCard(cards[0].id);
     }
   }
+
+  async function loadNewsAdmin() {
+  try {
+    const { data } = await apiGet("/api/ws/admin/news/list", true);
+    if (!data.ok) throw new Error(data.error || "Ошибка загрузки новостей");
+
+    newsItems = Array.isArray(data.items) ? data.items : [];
+    renderNewsList();
+
+    if (newsItems.length) {
+      const exists = newsItems.find(x => Number(x.id) === Number(currentNewsId));
+      selectNewsItem(exists ? exists.id : newsItems[0].id);
+    } else {
+      currentNewsId = null;
+      newNewsItem();
+    }
+  } catch (e) {
+    showStatus("newsMsg", e.message, "error");
+  }
+}
+
+function renderNewsList() {
+  const wrap = document.getElementById("newsList");
+  wrap.innerHTML = "";
+
+  if (!newsItems.length) {
+    wrap.innerHTML = `<div class="muted">Новости пока не созданы</div>`;
+    return;
+  }
+
+  newsItems.forEach(item => {
+    const active = Number(item.id) === Number(currentNewsId);
+    const el = document.createElement("div");
+    el.className = "item" + (active ? " active" : "");
+    el.innerHTML = `
+      <div class="item-title">${escapeHtml(item.title || "Без названия")}</div>
+      <div class="item-meta">
+        id: ${Number(item.id || 0)} · type: ${escapeHtml(item.news_type || "info")}<br>
+        version: ${escapeHtml(item.version_key || "—")}
+      </div>
+      <div class="tool-row" style="margin-top:8px;margin-bottom:0;">
+        <span class="chip ${item.is_active ? "green" : "red"}">${item.is_active ? "active" : "inactive"}</span>
+        <span class="chip ${item.is_mandatory ? "red" : "blue"}">${item.is_mandatory ? "mandatory" : "normal"}</span>
+      </div>
+    `;
+    el.onclick = () => selectNewsItem(item.id);
+    wrap.appendChild(el);
+  });
+}
+
+function selectNewsItem(id) {
+  currentNewsId = Number(id || 0);
+  const item = newsItems.find(x => Number(x.id) === currentNewsId);
+  if (!item) return;
+
+  document.getElementById("newsTitle").value = item.title || "";
+  document.getElementById("newsBody").value = item.body || "";
+  document.getElementById("newsType").value = item.news_type || "info";
+  document.getElementById("newsVersionKey").value = item.version_key || "";
+  document.getElementById("newsButtonText").value = item.button_text || "";
+  document.getElementById("newsButtonUrl").value = item.button_url || "";
+  document.getElementById("newsMainImageUrl").value = item.main_image_url || "";
+  document.getElementById("newsIsActive").checked = item.is_active !== false;
+  document.getElementById("newsIsMandatory").checked = !!item.is_mandatory;
+  document.getElementById("newsGalleryImages").value = Array.isArray(item.gallery_images) ? item.gallery_images.join("\n") : "";
+
+  uploadedNewsMainImageBase64 = "";
+  uploadedNewsGalleryImageBase64 = "";
+
+  const preview = document.getElementById("newsMainImagePreview");
+  if (item.main_image_url) {
+    preview.src = item.main_image_url;
+    preview.classList.remove("hidden");
+  } else {
+    preview.classList.add("hidden");
+  }
+
+  renderNewsGalleryPreview();
+  renderNewsList();
+}
+
+function newNewsItem() {
+  currentNewsId = null;
+  document.getElementById("newsTitle").value = "";
+  document.getElementById("newsBody").value = "";
+  document.getElementById("newsType").value = "info";
+  document.getElementById("newsVersionKey").value = "news_" + Date.now();
+  document.getElementById("newsButtonText").value = "";
+  document.getElementById("newsButtonUrl").value = "";
+  document.getElementById("newsMainImageUrl").value = "";
+  document.getElementById("newsIsActive").checked = true;
+  document.getElementById("newsIsMandatory").checked = false;
+  document.getElementById("newsGalleryImages").value = "";
+
+  uploadedNewsMainImageBase64 = "";
+  uploadedNewsGalleryImageBase64 = "";
+  document.getElementById("newsMainImagePreview").classList.add("hidden");
+
+  renderNewsGalleryPreview();
+  renderNewsList();
+}
+
+function collectNewsPayload() {
+  return {
+    title: document.getElementById("newsTitle").value.trim(),
+    body: document.getElementById("newsBody").value.trim(),
+    news_type: document.getElementById("newsType").value,
+    version_key: document.getElementById("newsVersionKey").value.trim(),
+    button_text: document.getElementById("newsButtonText").value.trim(),
+    button_url: document.getElementById("newsButtonUrl").value.trim(),
+    main_image_url: document.getElementById("newsMainImageUrl").value.trim(),
+    is_active: !!document.getElementById("newsIsActive").checked,
+    is_mandatory: !!document.getElementById("newsIsMandatory").checked,
+    gallery_images: document.getElementById("newsGalleryImages").value
+      .split("\n")
+      .map(x => x.trim())
+      .filter(Boolean)
+  };
+}
+
+async function uploadNewsMainImageIfNeeded(payload) {
+  if (!uploadedNewsMainImageBase64) return payload;
+
+  const { data } = await apiPost("/api/ws/admin/upload-image", {
+    image_base64: uploadedNewsMainImageBase64
+  }, true);
+
+  if (!data.ok) throw new Error(data.error || "Ошибка загрузки основной картинки");
+
+  payload.main_image_url = data.image_url || "";
+  document.getElementById("newsMainImageUrl").value = payload.main_image_url;
+  uploadedNewsMainImageBase64 = "";
+  return payload;
+}
+
+async function appendNewsGalleryImageIfNeeded() {
+  if (!uploadedNewsGalleryImageBase64) return;
+
+  const { data } = await apiPost("/api/ws/admin/upload-image", {
+    image_base64: uploadedNewsGalleryImageBase64
+  }, true);
+
+  if (!data.ok) throw new Error(data.error || "Ошибка загрузки картинки галереи");
+
+  const textarea = document.getElementById("newsGalleryImages");
+  const current = textarea.value.trim();
+  textarea.value = current ? current + "\n" + data.image_url : data.image_url;
+  uploadedNewsGalleryImageBase64 = "";
+}
+
+function renderNewsGalleryPreview() {
+  const wrap = document.getElementById("newsGalleryPreviewList");
+  const items = document.getElementById("newsGalleryImages").value
+    .split("\n")
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  wrap.innerHTML = "";
+
+  if (!items.length) {
+    wrap.innerHTML = `<div class="muted">Галерея пуста</div>`;
+    return;
+  }
+
+  items.forEach((url, index) => {
+    const el = document.createElement("div");
+    el.className = "item";
+    el.innerHTML = `
+      <div class="item-row">
+        <div class="thumb">${url ? `<img src="${escapeHtml(url)}" alt="">` : "🖼️"}</div>
+        <div style="flex:1;">
+          <div class="item-title">Изображение ${index + 1}</div>
+          <div class="item-meta mono">${escapeHtml(url)}</div>
+        </div>
+        <div>
+          <button class="btn red small" onclick="removeNewsGalleryImage(${index})">Удалить</button>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(el);
+  });
+}
+
+function removeNewsGalleryImage(index) {
+  const textarea = document.getElementById("newsGalleryImages");
+  const items = textarea.value
+    .split("\n")
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  items.splice(index, 1);
+  textarea.value = items.join("\n");
+  renderNewsGalleryPreview();
+}
+
+async function saveNewsItem() {
+  showStatus("newsMsg", "", "");
+
+  try {
+    let payload = collectNewsPayload();
+    payload = await uploadNewsMainImageIfNeeded(payload);
+    await appendNewsGalleryImageIfNeeded();
+    payload = collectNewsPayload();
+
+    let data;
+    if (currentNewsId) {
+      ({ data } = await apiPost("/api/ws/admin/news/update", {
+        news_id: currentNewsId,
+        ...payload
+      }, true));
+    } else {
+      ({ data } = await apiPost("/api/ws/admin/news/create", payload, true));
+    }
+
+    if (!data.ok) {
+      showStatus("newsMsg", data.error || "Ошибка сохранения новости", "error");
+      return;
+    }
+
+    showStatus("newsMsg", "Новость сохранена", "success");
+    await loadNewsAdmin();
+
+    if (data.item?.id) {
+      currentNewsId = data.item.id;
+      selectNewsItem(currentNewsId);
+    }
+  } catch (e) {
+    showStatus("newsMsg", e.message, "error");
+  }
+}
+
+async function deleteNewsItem() {
+  if (!currentNewsId) {
+    showStatus("newsMsg", "Сначала выбери новость", "error");
+    return;
+  }
+
+  if (!confirm("Удалить новость?")) return;
+
+  try {
+    const { data } = await apiPost("/api/ws/admin/news/delete", {
+      news_id: currentNewsId
+    }, true);
+
+    if (!data.ok) {
+      showStatus("newsMsg", data.error || "Ошибка удаления новости", "error");
+      return;
+    }
+
+    showStatus("newsMsg", "Новость удалена", "success");
+    currentNewsId = null;
+    await loadNewsAdmin();
+  } catch (e) {
+    showStatus("newsMsg", e.message, "error");
+  }
+}
 
 
   async function loadPaymentRequestsAdmin() {
@@ -6287,6 +6666,43 @@ async function rejectModerationContract() {
   });
 
   // ================= BOOTSTRAP =================
+
+  const newsMainImageFile = document.getElementById("newsMainImageFile");
+  if (newsMainImageFile) {
+    newsMainImageFile.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        uploadedNewsMainImageBase64 = String(reader.result || "");
+        const img = document.getElementById("newsMainImagePreview");
+        img.src = uploadedNewsMainImageBase64;
+        img.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  
+  const newsGalleryImageFile = document.getElementById("newsGalleryImageFile");
+  if (newsGalleryImageFile) {
+    newsGalleryImageFile.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        uploadedNewsGalleryImageBase64 = String(reader.result || "");
+        try {
+          await appendNewsGalleryImageIfNeeded();
+          renderNewsGalleryPreview();
+          showStatus("newsMsg", "Картинка добавлена в галерею", "success");
+        } catch (err) {
+          showStatus("newsMsg", err.message || "Ошибка загрузки картинки галереи", "error");
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  
 
   window.addEventListener("DOMContentLoaded", () => {
     switchDesignTab("cards");
