@@ -2734,20 +2734,17 @@
   }
 
   function showLogin() {
+    hideAllRootViews();
     document.getElementById("loginView").classList.remove("hidden");
-    document.getElementById("adminVkConfirmView").classList.add("hidden");
-    document.getElementById("adminView").classList.add("hidden");
   }
-
+  
   function showAdmin() {
-    document.getElementById("loginView").classList.add("hidden");
-    document.getElementById("adminVkConfirmView").classList.add("hidden");
+    hideAllRootViews();
     document.getElementById("adminView").classList.remove("hidden");
   }
-
+  
   function showAdminVkConfirm() {
-    document.getElementById("loginView").classList.add("hidden");
-    document.getElementById("adminView").classList.add("hidden");
+    hideAllRootViews();
     document.getElementById("adminVkConfirmView").classList.remove("hidden");
   }
 
@@ -2781,15 +2778,15 @@
     const password = document.getElementById("loginPassword").value;
     const msg = document.getElementById("loginMsg");
     msg.textContent = "";
-
+  
     try {
       const { data } = await apiPost("/api/ws/login", { login, password }, false);
-
+  
       if (!data.ok) {
         msg.textContent = data.error || "Ошибка входа";
         return;
       }
-
+  
       if (data.need_admin_vk_confirm) {
         pendingAdminTempUserId = Number(data.temp_user_id || 0);
         pendingAdminRequestExpiresAt = String(data.request_expires_at || "");
@@ -2803,13 +2800,13 @@
         setWsToken(data.token);
         return;
       }
-
+  
       if (!data.token) {
         msg.textContent = "Сервер не вернул токен";
         return;
       }
-
-      localStorage.setItem(TOKEN_KEY, data.token);
+  
+      setWsToken(data.token);
       await loadMe();
       await loadCurrentSection();
     } catch (e) {
@@ -2927,14 +2924,6 @@
     loadCurrentSection();
   }
 
-  async function policeAdminLogin() {
-      setPoliceToken(data.token);
-      await loadPoliceMe();
-      await loadPoliceCurrentSection();
-    } catch (e) {
-      showStatus("policeLoginMsg", e.message, "error");
-    }
-  }
   
   async function policeApiGet(url) {
     const res = await fetch(API_BASE + url, {
@@ -3038,81 +3027,6 @@
       }
     }
   
-  
-    async function loadPdLeaders() {
-      const el = document.createElement("div");
-      el.className = "item" + (active ? " active" : "");
-      el.innerHTML = `
-        <div class="item-row">
-          <div class="thumb">${item.avatar_url ? `<img src="${escapeHtml(item.avatar_url)}" alt="">` : "👮"}</div>
-          <div style="flex:1;">
-            <div class="item-title">${escapeHtml(item.department || "—")}</div>
-            <div class="item-meta">
-              nick: ${escapeHtml(item.nick || "—")}<br>
-              account_id: ${escapeHtml(item.account_id || "—")}
-            </div>
-          </div>
-        </div>
-      `;
-      el.onclick = () => selectPdLeader(item.id);
-      wrap.appendChild(el);
-    });
-  }
-  
-  function selectPdLeader(id) {
-    currentPdLeaderId = Number(id || 0);
-    const item = pdLeaders.find(x => Number(x.id) === currentPdLeaderId);
-    if (!item) return;
-  
-    document.getElementById("pdLeaderDepartment").value = item.department || "";
-    document.getElementById("pdLeaderNick").value = item.nick || "";
-    document.getElementById("pdLeaderAccountId").value = item.account_id || "";
-    document.getElementById("pdLeaderAvatarUrl").value = item.avatar_url || "";
-  
-    uploadedPdLeaderAvatarBase64 = "";
-    const img = document.getElementById("pdLeaderAvatarPreview");
-    if (item.avatar_url) {
-      img.src = item.avatar_url;
-      img.classList.remove("hidden");
-    } else {
-      img.classList.add("hidden");
-    }
-  
-    renderPdLeadersList();
-  }
-  
-  async function savePdLeader() {
-    if (!currentPdLeaderId) {
-      showStatus("pdLeaderMsg", "Сначала выбери лидера", "error");
-      return;
-    }
-  
-    try {
-      let avatar_url = document.getElementById("pdLeaderAvatarUrl").value.trim();
-  
-      if (uploadedPdLeaderAvatarBase64) {
-        const up = await apiPost("/api/ws/admin/upload-image", {
-          image_base64: uploadedPdLeaderAvatarBase64
-        }, true);
-        if (!up.data.ok) throw new Error(up.data.error || "Ошибка загрузки аватара");
-        avatar_url = up.data.image_url || avatar_url;
-      }
-  
-      const { data } = await policeApiPost("/api/police/admin/leaders/update", {
-        leader_id: currentPdLeaderId,
-        nick: document.getElementById("pdLeaderNick").value.trim(),
-        account_id: document.getElementById("pdLeaderAccountId").value.trim(),
-        avatar_url
-      });
-  
-      if (!data.ok) throw new Error(data.error || "Ошибка сохранения лидера");
-  
-      showStatus("pdLeaderMsg", "Лидер сохранён", "success");
-      await loadPdLeaders();
-    } catch (e) {
-      showStatus("pdLeaderMsg", e.message, "error");
-    }
-  }
   
 
   async function loadCurrentSection() {
@@ -6926,34 +6840,6 @@ async function rejectModerationContract() {
   }
 
 
-  async function loadPdWeeklyRows() {
-    [
-      "pdWeekStart","pdWeekEnd","pdNick1","pdAsh1","pdDept1",
-      "pdNick2","pdAsh2","pdDept2","pdNick3","pdAsh3","pdDept3",
-      "pdWeekTotalAsh"
-    ].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = "";
-    });
-    renderPdWeeklyList();
-  }
-  
-  function collectPdWeeklyPayload() {
-    return {
-      week_start: document.getElementById("pdWeekStart").value,
-      week_end: document.getElementById("pdWeekEnd").value,
-      nick_1: document.getElementById("pdNick1").value.trim(),
-      ash_1: Number(document.getElementById("pdAsh1").value || 0),
-      dept_1: document.getElementById("pdDept1").value.trim(),
-      nick_2: document.getElementById("pdNick2").value.trim(),
-      ash_2: Number(document.getElementById("pdAsh2").value || 0),
-      dept_2: document.getElementById("pdDept2").value.trim(),
-      nick_3: document.getElementById("pdNick3").value.trim(),
-      ash_3: Number(document.getElementById("pdAsh3").value || 0),
-      dept_3: document.getElementById("pdDept3").value.trim(),
-      total_ash: Number(document.getElementById("pdWeekTotalAsh").value || 0)
-    };
-  }
 
   async function loadPdActivityRewards() {
   } catch (e) {
@@ -6961,8 +6847,334 @@ async function rejectModerationContract() {
   }
 }
 
+
+  async function policeAdminLogin() {
+  const login = document.getElementById("policeLoginLogin")?.value.trim();
+  const password = document.getElementById("policeLoginPassword")?.value || "";
+
+  showStatus("policeLoginMsg", "", "");
+
+  if (!login || !password) {
+    showStatus("policeLoginMsg", "Заполни логин и пароль", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(API_BASE + "/api/police/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({ login, password })
+    });
+
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error("Сервер вернул не JSON: " + text.slice(0, 160));
+    }
+
+    if (!data.ok || !data.token) {
+      throw new Error(data.error || "Ошибка входа");
+    }
+
+    setPoliceToken(data.token);
+    await loadPoliceMe();
+    await loadPoliceCurrentSection();
+  } catch (e) {
+    showStatus("policeLoginMsg", e.message, "error");
+  }
+}
+
+async function loadPdLeaders() {
+  try {
+    const { data } = await policeApiGet("/api/police/admin/leaders");
+    if (!data.ok) throw new Error(data.error || "Ошибка загрузки лидеров");
+
+    pdLeaders = Array.isArray(data.items) ? data.items : [];
+    renderPdLeadersList();
+
+    if (pdLeaders.length) {
+      const exists = pdLeaders.find(x => Number(x.id) === Number(currentPdLeaderId));
+      selectPdLeader(exists ? exists.id : pdLeaders[0].id);
+    } else {
+      currentPdLeaderId = null;
+      document.getElementById("pdLeaderDepartment").value = "";
+      document.getElementById("pdLeaderNick").value = "";
+      document.getElementById("pdLeaderAccountId").value = "";
+      document.getElementById("pdLeaderAvatarUrl").value = "";
+      document.getElementById("pdLeaderAvatarPreview").classList.add("hidden");
+    }
+  } catch (e) {
+    showStatus("pdLeaderMsg", e.message, "error");
+  }
+}
+
+function renderPdLeadersList() {
+  const wrap = document.getElementById("pdLeadersList");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+
+  if (!pdLeaders.length) {
+    wrap.innerHTML = `<div class="muted">Лидеры не найдены</div>`;
+    return;
+  }
+
+  pdLeaders.forEach(item => {
+    const active = Number(item.id) === Number(currentPdLeaderId);
+    const el = document.createElement("div");
+    el.className = "item" + (active ? " active" : "");
+    el.innerHTML = `
+      <div class="item-row">
+        <div class="thumb">
+          ${item.avatar_url ? `<img src="${escapeHtml(item.avatar_url)}" alt="">` : "👮"}
+        </div>
+        <div style="flex:1;">
+          <div class="item-title">${escapeHtml(item.department || "—")}</div>
+          <div class="item-meta">
+            nick: ${escapeHtml(item.nick || "—")}<br>
+            account_id: ${escapeHtml(item.account_id || "—")}<br>
+            day/week: ${Number(item.points_day || 0)} / ${Number(item.points_week || 0)}
+          </div>
+        </div>
+      </div>
+    `;
+    el.onclick = () => selectPdLeader(item.id);
+    wrap.appendChild(el);
+  });
+}
+
+function selectPdLeader(id) {
+  currentPdLeaderId = Number(id || 0);
+  const item = pdLeaders.find(x => Number(x.id) === currentPdLeaderId);
+  if (!item) return;
+
+  document.getElementById("pdLeaderDepartment").value = item.department || "";
+  document.getElementById("pdLeaderNick").value = item.nick || "";
+  document.getElementById("pdLeaderAccountId").value = item.account_id || "";
+  document.getElementById("pdLeaderAvatarUrl").value = item.avatar_url || "";
+
+  uploadedPdLeaderAvatarBase64 = "";
+  const img = document.getElementById("pdLeaderAvatarPreview");
+  if (item.avatar_url) {
+    img.src = item.avatar_url;
+    img.classList.remove("hidden");
+  } else {
+    img.classList.add("hidden");
+  }
+
+  renderPdLeadersList();
+}
+
+async function savePdLeader() {
+  if (!currentPdLeaderId) {
+    showStatus("pdLeaderMsg", "Сначала выбери лидера", "error");
+    return;
+  }
+
+  try {
+    let avatar_url = document.getElementById("pdLeaderAvatarUrl").value.trim();
+
+    if (uploadedPdLeaderAvatarBase64) {
+      const up = await apiPost("/api/ws/admin/upload-image", {
+        image_base64: uploadedPdLeaderAvatarBase64
+      }, true);
+
+      if (!up.data.ok) throw new Error(up.data.error || "Ошибка загрузки аватара");
+      avatar_url = up.data.image_url || avatar_url;
+    }
+
+    const { data } = await policeApiPost("/api/police/admin/leaders/update", {
+      leader_id: currentPdLeaderId,
+      nick: document.getElementById("pdLeaderNick").value.trim(),
+      account_id: document.getElementById("pdLeaderAccountId").value.trim(),
+      avatar_url
+    });
+
+    if (!data.ok) throw new Error(data.error || "Ошибка сохранения лидера");
+
+    showStatus("pdLeaderMsg", "Лидер сохранён", "success");
+    await loadPdLeaders();
+  } catch (e) {
+    showStatus("pdLeaderMsg", e.message, "error");
+  }
+}
+
+async function loadPdWeeklyRows() {
+  try {
+    const { data } = await policeApiGet("/api/police/admin/weekly");
+    if (!data.ok) throw new Error(data.error || "Ошибка загрузки недельных записей");
+
+    pdWeeklyRows = Array.isArray(data.items) ? data.items : [];
+    renderPdWeeklyList();
+
+    if (pdWeeklyRows.length) {
+      const exists = pdWeeklyRows.find(x => Number(x.id) === Number(currentPdWeeklyId));
+      selectPdWeeklyRow(exists ? exists.id : pdWeeklyRows[0].id);
+    } else {
+      newPdWeeklyRow();
+    }
+  } catch (e) {
+    showStatus("pdWeeklyMsg", e.message, "error");
+  }
+}
+
+function renderPdWeeklyList() {
+  const wrap = document.getElementById("pdWeeklyList");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+
+  if (!pdWeeklyRows.length) {
+    wrap.innerHTML = `<div class="muted">Недельные записи не найдены</div>`;
+    return;
+  }
+
+  pdWeeklyRows.forEach(item => {
+    const active = Number(item.id) === Number(currentPdWeeklyId);
+    const el = document.createElement("div");
+    el.className = "item" + (active ? " active" : "");
+    el.innerHTML = `
+      <div class="item-title">${escapeHtml(item.week_start || "—")} — ${escapeHtml(item.week_end || "—")}</div>
+      <div class="item-meta">
+        1) ${escapeHtml(item.nick_1 || "—")} · ${Number(item.ash_1 || 0)}<br>
+        2) ${escapeHtml(item.nick_2 || "—")} · ${Number(item.ash_2 || 0)}<br>
+        3) ${escapeHtml(item.nick_3 || "—")} · ${Number(item.ash_3 || 0)}<br>
+        total: ${Number(item.total_ash || 0)}
+      </div>
+    `;
+    el.onclick = () => selectPdWeeklyRow(item.id);
+    wrap.appendChild(el);
+  });
+}
+
+function selectPdWeeklyRow(id) {
+  currentPdWeeklyId = Number(id || 0);
+  const item = pdWeeklyRows.find(x => Number(x.id) === currentPdWeeklyId);
+  if (!item) return;
+
+  document.getElementById("pdWeekStart").value = item.week_start || "";
+  document.getElementById("pdWeekEnd").value = item.week_end || "";
+
+  document.getElementById("pdNick1").value = item.nick_1 || "";
+  document.getElementById("pdAsh1").value = Number(item.ash_1 || 0);
+  document.getElementById("pdDept1").value = item.dept_1 || "";
+
+  document.getElementById("pdNick2").value = item.nick_2 || "";
+  document.getElementById("pdAsh2").value = Number(item.ash_2 || 0);
+  document.getElementById("pdDept2").value = item.dept_2 || "";
+
+  document.getElementById("pdNick3").value = item.nick_3 || "";
+  document.getElementById("pdAsh3").value = Number(item.ash_3 || 0);
+  document.getElementById("pdDept3").value = item.dept_3 || "";
+
+  document.getElementById("pdWeekTotalAsh").value = Number(item.total_ash || 0);
+
+  renderPdWeeklyList();
+}
+
+function newPdWeeklyRow() {
+  currentPdWeeklyId = null;
+
+  [
+    "pdWeekStart","pdWeekEnd","pdNick1","pdAsh1","pdDept1",
+    "pdNick2","pdAsh2","pdDept2","pdNick3","pdAsh3","pdDept3",
+    "pdWeekTotalAsh"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  renderPdWeeklyList();
+}
+
+function collectPdWeeklyPayload() {
+  return {
+    week_start: document.getElementById("pdWeekStart").value,
+    week_end: document.getElementById("pdWeekEnd").value,
+    nick_1: document.getElementById("pdNick1").value.trim(),
+    ash_1: Number(document.getElementById("pdAsh1").value || 0),
+    dept_1: document.getElementById("pdDept1").value.trim(),
+    nick_2: document.getElementById("pdNick2").value.trim(),
+    ash_2: Number(document.getElementById("pdAsh2").value || 0),
+    dept_2: document.getElementById("pdDept2").value.trim(),
+    nick_3: document.getElementById("pdNick3").value.trim(),
+    ash_3: Number(document.getElementById("pdAsh3").value || 0),
+    dept_3: document.getElementById("pdDept3").value.trim(),
+    total_ash: Number(document.getElementById("pdWeekTotalAsh").value || 0)
+  };
+}
+
+async function savePdWeeklyRow() {
+  try {
+    const payload = collectPdWeeklyPayload();
+    let data;
+
+    if (currentPdWeeklyId) {
+      ({ data } = await policeApiPost("/api/police/admin/weekly/update", {
+        weekly_id: currentPdWeeklyId,
+        ...payload
+      }));
+    } else {
+      ({ data } = await policeApiPost("/api/police/admin/weekly/create", payload));
+    }
+
+    if (!data.ok) throw new Error(data.error || "Ошибка сохранения недельной записи");
+
+    showStatus("pdWeeklyMsg", "Недельная запись сохранена", "success");
+    await loadPdWeeklyRows();
+  } catch (e) {
+    showStatus("pdWeeklyMsg", e.message, "error");
+  }
+}
+
+async function deletePdWeeklyRow() {
+  if (!currentPdWeeklyId) {
+    showStatus("pdWeeklyMsg", "Сначала выбери запись", "error");
+    return;
+  }
+
+  if (!confirm("Удалить недельную запись?")) return;
+
+  try {
+    const { data } = await policeApiPost("/api/police/admin/weekly/delete", {
+      weekly_id: currentPdWeeklyId
+    });
+
+    if (!data.ok) throw new Error(data.error || "Ошибка удаления недельной записи");
+
+    showStatus("pdWeeklyMsg", "Недельная запись удалена", "success");
+    currentPdWeeklyId = null;
+    await loadPdWeeklyRows();
+  } catch (e) {
+    showStatus("pdWeeklyMsg", e.message, "error");
+  }
+}
+
+async function loadPdActivityRewards() {
+  try {
+    const { data } = await policeApiGet("/api/police/admin/activity-rewards");
+    if (!data.ok) throw new Error(data.error || "Ошибка загрузки наград активности");
+
+    pdActivityRewards = Array.isArray(data.items) ? data.items : [];
+    renderPdRewardsList();
+
+    if (pdActivityRewards.length) {
+      const exists = pdActivityRewards.find(x => Number(x.id) === Number(currentPdRewardId));
+      selectPdReward(exists ? exists.id : pdActivityRewards[0].id);
+    } else {
+      newPdReward();
+    }
+  } catch (e) {
+    showStatus("pdRewardMsg", e.message, "error");
+  }
+}
+
 function renderPdRewardsList() {
   const wrap = document.getElementById("pdRewardsList");
+  if (!wrap) return;
   wrap.innerHTML = "";
 
   if (!pdActivityRewards.length) {
@@ -6979,7 +7191,7 @@ function renderPdRewardsList() {
       <div class="item-meta">
         key: ${escapeHtml(item.activity_key || "—")}<br>
         ash_value: ${Number(item.ash_value || 0)}<br>
-        active: ${item.is_active ? "true" : "false"}
+        active: ${item.is_active ? "true" : "false"} · sort: ${Number(item.sort_order || 0)}
       </div>
     `;
     el.onclick = () => selectPdReward(item.id);
@@ -6995,9 +7207,39 @@ function selectPdReward(id) {
   document.getElementById("pdRewardKey").value = item.activity_key || "";
   document.getElementById("pdRewardTitle").value = item.title || "";
   document.getElementById("pdRewardValue").value = Number(item.ash_value || 0);
+  document.getElementById("pdRewardSortOrder").value = Number(item.sort_order || 0);
   document.getElementById("pdRewardIsActive").value = String(item.is_active !== false);
 
   renderPdRewardsList();
+}
+
+function newPdReward() {
+  currentPdRewardId = null;
+  document.getElementById("pdRewardKey").value = "";
+  document.getElementById("pdRewardTitle").value = "";
+  document.getElementById("pdRewardValue").value = "0";
+  document.getElementById("pdRewardSortOrder").value = "0";
+  document.getElementById("pdRewardIsActive").value = "true";
+  renderPdRewardsList();
+}
+
+async function createPdReward() {
+  try {
+    const { data } = await policeApiPost("/api/police/admin/activity-rewards/create", {
+      activity_key: document.getElementById("pdRewardKey").value.trim(),
+      title: document.getElementById("pdRewardTitle").value.trim(),
+      ash_value: Number(document.getElementById("pdRewardValue").value || 0),
+      sort_order: Number(document.getElementById("pdRewardSortOrder").value || 0),
+      is_active: document.getElementById("pdRewardIsActive").value === "true"
+    });
+
+    if (!data.ok) throw new Error(data.error || "Ошибка создания награды");
+
+    showStatus("pdRewardMsg", "Награда создана", "success");
+    await loadPdActivityRewards();
+  } catch (e) {
+    showStatus("pdRewardMsg", e.message, "error");
+  }
 }
 
 async function savePdReward() {
@@ -7012,6 +7254,7 @@ async function savePdReward() {
       activity_key: document.getElementById("pdRewardKey").value.trim(),
       title: document.getElementById("pdRewardTitle").value.trim(),
       ash_value: Number(document.getElementById("pdRewardValue").value || 0),
+      sort_order: Number(document.getElementById("pdRewardSortOrder").value || 0),
       is_active: document.getElementById("pdRewardIsActive").value === "true"
     });
 
@@ -7023,6 +7266,31 @@ async function savePdReward() {
     showStatus("pdRewardMsg", e.message, "error");
   }
 }
+
+async function deletePdReward() {
+  if (!currentPdRewardId) {
+    showStatus("pdRewardMsg", "Сначала выбери награду", "error");
+    return;
+  }
+
+  if (!confirm("Удалить награду активности?")) return;
+
+  try {
+    const { data } = await policeApiPost("/api/police/admin/activity-rewards/delete", {
+      reward_id: currentPdRewardId
+    });
+
+    if (!data.ok) throw new Error(data.error || "Ошибка удаления награды");
+
+    showStatus("pdRewardMsg", "Награда удалена", "success");
+    currentPdRewardId = null;
+    await loadPdActivityRewards();
+  } catch (e) {
+    showStatus("pdRewardMsg", e.message, "error");
+  }
+}
+
+
   
   async function savePdWeeklyRow() {
     try {
@@ -7254,6 +7522,13 @@ async function savePdReward() {
     renderComboBuilderRewards();
     renderContractTemplatesQueue();
     updateTopbarBySection("design");
+
+    const policeLoginPassword = document.getElementById("policeLoginPassword");
+    if (policeLoginPassword) {
+      policeLoginPassword.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") policeAdminLogin();
+      });
+    }
 
     const loginPassword = document.getElementById("loginPassword");
     if (loginPassword) {
