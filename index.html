@@ -466,6 +466,51 @@
   </style>
 </head>
 <body>
+
+
+  <div id="portalSelectView" class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-title">WORLD SCRIPT</div>
+        <div class="brand-sub">Выберите административный раздел</div>
+      </div>
+    </aside>
+  
+    <main class="main">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Мир скриптинга</div>
+              <div class="panel-sub">Текущая админка сайта World Script</div>
+            </div>
+          </div>
+          <div class="panel-body stack">
+            <div class="box-note">Весь текущий функционал: оформление, финансы, пользователи, контракты, рулетка, новости и т.д.</div>
+            <div class="tool-row">
+              <button class="btn blue" onclick="openWsLoginView()">Открыть</button>
+            </div>
+          </div>
+        </div>
+  
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Полицейские разработки</div>
+              <div class="panel-sub">PD-админка лидеров, недель и наград активности</div>
+            </div>
+          </div>
+          <div class="panel-body stack">
+            <div class="box-note">Отдельный вход через таблицу пользователей полицейского сайта и `api/police/login`.</div>
+            <div class="tool-row">
+              <button class="btn violet" onclick="openPoliceLoginView()">Открыть</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
   <div id="loginView" class="app">
     <aside class="sidebar">
       <div class="brand">
@@ -542,6 +587,77 @@
       </div>
     </main>
   </div>
+
+
+  <div id="policeAdminView" class="app hidden">
+              <input id="pdWeekTotalAsh" type="number" class="field">
+            </div>
+
+            <div class="tool-row">
+              <button class="btn blue" onclick="savePdWeeklyRow()">Сохранить</button>
+              <button class="btn red" onclick="deletePdWeeklyRow()">Удалить</button>
+              <button class="btn ghost" onclick="newPdWeeklyRow()">Очистить</button>
+            </div>
+            <div id="pdWeeklyMsg" class="status"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pdRewardsSection" class="grid hidden">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Награды активности</div>
+              <div class="panel-sub">Изменение баллов за тип активности</div>
+            </div>
+            <button class="btn blue small" onclick="loadPdActivityRewards()">Обновить</button>
+          </div>
+          <div class="panel-body">
+            <div id="pdRewardsList" class="list"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Редактор награды</div>
+              <div class="panel-sub">Ключ, название, очки, активность</div>
+            </div>
+          </div>
+          <div class="panel-body stack">
+            <div>
+              <label class="label">activity_key</label>
+              <input id="pdRewardKey" class="field">
+            </div>
+            <div>
+              <label class="label">title</label>
+              <input id="pdRewardTitle" class="field">
+            </div>
+            <div>
+              <label class="label">ash_value</label>
+              <input id="pdRewardValue" type="number" class="field">
+            </div>
+            <div>
+              <label class="label">is_active</label>
+              <select id="pdRewardIsActive" class="select">
+                <option value="true">true</option>
+                <option value="false">false</option>
+              </select>
+            </div>
+            <div class="tool-row">
+              <button class="btn blue" onclick="savePdReward()">Сохранить</button>
+            </div>
+            <div id="pdRewardMsg" class="status"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+  
 
   <div id="adminView" class="app hidden">
     <aside class="sidebar">
@@ -2327,6 +2443,23 @@
   const API_BASE = "https://world-script-api.onrender.com";
   const TOKEN_KEY = "ws_token";
 
+  const WS_TOKEN_KEY = "ws_token";
+  const POLICE_TOKEN_KEY = "police_token";
+  
+  let currentPortal = "ws"; // ws | police
+  let currentPoliceUser = null;
+  let currentPoliceSection = "leaders";
+  
+  let pdLeaders = [];
+  let currentPdLeaderId = null;
+  let uploadedPdLeaderAvatarBase64 = "";
+  
+  let pdWeeklyRows = [];
+  let currentPdWeeklyId = null;
+  
+  let pdActivityRewards = [];
+  let currentPdRewardId = null;
+
   let currentUser = null;
   let currentMainSection = "design";
 
@@ -2400,7 +2533,7 @@
   let uploadedNewsGalleryImageBase64 = "";
 
   function token() {
-    return localStorage.getItem(TOKEN_KEY) || "";
+    return getWsToken();
   }
 
   async function apiGet(url, auth = true, extraHeaders = {}) {
@@ -2432,6 +2565,30 @@
     let data;
     try { data = JSON.parse(text); } catch { throw new Error("Сервер вернул не JSON: " + text.slice(0, 160)); }
     return { res, data };
+  }
+
+  function getWsToken() {
+    return localStorage.getItem(WS_TOKEN_KEY) || "";
+  }
+  
+  function getPoliceToken() {
+    return localStorage.getItem(POLICE_TOKEN_KEY) || "";
+  }
+  
+  function setWsToken(token) {
+    localStorage.setItem(WS_TOKEN_KEY, token || "");
+  }
+  
+  function setPoliceToken(token) {
+    localStorage.setItem(POLICE_TOKEN_KEY, token || "");
+  }
+  
+  function clearWsToken() {
+    localStorage.removeItem(WS_TOKEN_KEY);
+  }
+  
+  function clearPoliceToken() {
+    localStorage.removeItem(POLICE_TOKEN_KEY);
   }
 
   function escapeHtml(str) {
@@ -2514,6 +2671,43 @@
     return `<span class="chip ${cls}">${escapeHtml(map[status] || status || "in_progress")}</span>`;
   }
 
+  function hideAllRootViews() {
+    [
+      "portalSelectView",
+      "loginView",
+      "adminVkConfirmView",
+      "adminView",
+      "policeLoginView",
+      "policeAdminView"
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("hidden");
+    });
+  }
+  
+  function showPortalSelect() {
+    hideAllRootViews();
+    document.getElementById("portalSelectView").classList.remove("hidden");
+  }
+  
+  function openWsLoginView() {
+    currentPortal = "ws";
+    hideAllRootViews();
+    document.getElementById("loginView").classList.remove("hidden");
+  }
+  
+  function openPoliceLoginView() {
+    currentPortal = "police";
+    hideAllRootViews();
+    document.getElementById("policeLoginView").classList.remove("hidden");
+  }
+  
+  function showPoliceAdmin() {
+    hideAllRootViews();
+    document.getElementById("policeAdminView").classList.remove("hidden");
+  }
+  
+
   function badgeContractStatus(status) {
     const map = {
       draft: "Черновик",
@@ -2558,14 +2752,14 @@
   }
 
   function adminLogout() {
-    localStorage.removeItem(TOKEN_KEY);
+    clearWsToken();
     currentUser = null;
     pendingAdminTempUserId = null;
     pendingAdminRequestExpiresAt = "";
     if (onlineAutoTimer) clearInterval(onlineAutoTimer);
     onlineAutoTimer = null;
     onlineAutoEnabled = false;
-    showLogin();
+    showPortalSelect();
   }
 
   async function loadMe() {
@@ -2606,6 +2800,7 @@
             : "Ожидается код подтверждения";
         showStatus("adminVkConfirmMsg", "Ожидаем код из VK", "success");
         showAdminVkConfirm();
+        setWsToken(data.token);
         return;
       }
 
@@ -2664,6 +2859,7 @@
       pendingAdminTempUserId = null;
       pendingAdminRequestExpiresAt = "";
       document.getElementById("adminVkCode").value = "";
+      setWsToken(data.token);
 
       await loadMe();
       await loadCurrentSection();
@@ -2730,6 +2926,194 @@
     updateTopbarBySection(name);
     loadCurrentSection();
   }
+
+  async function policeAdminLogin() {
+      setPoliceToken(data.token);
+      await loadPoliceMe();
+      await loadPoliceCurrentSection();
+    } catch (e) {
+      showStatus("policeLoginMsg", e.message, "error");
+    }
+  }
+  
+  async function policeApiGet(url) {
+    const res = await fetch(API_BASE + url, {
+      headers: {
+        "Accept": "application/json",
+        "Authorization": "Bearer " + getPoliceToken()
+      }
+    });
+  
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error("Сервер вернул не JSON: " + text.slice(0, 160)); }
+  
+    if (res.status === 401) {
+      clearPoliceToken();
+      openPoliceLoginView();
+      throw new Error("Unauthorized");
+    }
+  
+    return { res, data };
+  }
+  
+  async function policeApiPost(url, body = {}) {
+    const res = await fetch(API_BASE + url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": "Bearer " + getPoliceToken()
+      },
+      body: JSON.stringify(body)
+    });
+  
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error("Сервер вернул не JSON: " + text.slice(0, 160)); }
+  
+    if (res.status === 401) {
+      clearPoliceToken();
+      openPoliceLoginView();
+      throw new Error("Unauthorized");
+    }
+  
+    return { res, data };
+  }
+  
+  async function loadPoliceMe() {
+    const { data } = await policeApiGet("/api/police/me");
+    if (!data.ok) throw new Error(data.error || "Не удалось загрузить PD-пользователя");
+  
+    currentPoliceUser = data.user;
+  
+    if (String(currentPoliceUser.role || "").toLowerCase() !== "admin") {
+      throw new Error("Требуется admin в PD-системе");
+    }
+  
+    document.getElementById("pdAdminUserText").textContent =
+      `${currentPoliceUser.nick || currentPoliceUser.login} · ${currentPoliceUser.role}`;
+  
+    showPoliceAdmin();
+  }
+  
+  function policeAdminLogout() {
+    clearPoliceToken();
+    currentPoliceUser = null;
+    showPortalSelect();
+  }
+
+
+  function switchPoliceSection(name) {
+    currentPoliceSection = name;
+  
+    const map = {
+      leaders: ["Лидеры", "Управление никами, аккаунтами и аватарами лидеров"],
+      weekly: ["Недельные записи", "Добавление, редактирование и удаление недельных итогов"],
+      rewards: ["Награды активности", "Баллы за активности, собесы, онлайн и прочее"]
+    };
+  
+    const data = map[name] || map.leaders;
+    document.getElementById("pdTopbarTitle").textContent = data[0];
+    document.getElementById("pdTopbarSubtitle").textContent = data[1];
+  
+    document.getElementById("pdLeadersSection").classList.toggle("hidden", name !== "leaders");
+    document.getElementById("pdWeeklySection").classList.toggle("hidden", name !== "weekly");
+    document.getElementById("pdRewardsSection").classList.toggle("hidden", name !== "rewards");
+  
+    document.getElementById("pdNavLeadersBtn").classList.toggle("active", name === "leaders");
+    document.getElementById("pdNavWeeklyBtn").classList.toggle("active", name === "weekly");
+    document.getElementById("pdNavRewardsBtn").classList.toggle("active", name === "rewards");
+  
+    loadPoliceCurrentSection();
+  }
+  
+    async function loadPoliceCurrentSection() {
+      if (currentPoliceSection === "leaders") {
+        await loadPdLeaders();
+      } else if (currentPoliceSection === "weekly") {
+        await loadPdWeeklyRows();
+      } else if (currentPoliceSection === "rewards") {
+        await loadPdActivityRewards();
+      }
+    }
+  
+  
+    async function loadPdLeaders() {
+      const el = document.createElement("div");
+      el.className = "item" + (active ? " active" : "");
+      el.innerHTML = `
+        <div class="item-row">
+          <div class="thumb">${item.avatar_url ? `<img src="${escapeHtml(item.avatar_url)}" alt="">` : "👮"}</div>
+          <div style="flex:1;">
+            <div class="item-title">${escapeHtml(item.department || "—")}</div>
+            <div class="item-meta">
+              nick: ${escapeHtml(item.nick || "—")}<br>
+              account_id: ${escapeHtml(item.account_id || "—")}
+            </div>
+          </div>
+        </div>
+      `;
+      el.onclick = () => selectPdLeader(item.id);
+      wrap.appendChild(el);
+    });
+  }
+  
+  function selectPdLeader(id) {
+    currentPdLeaderId = Number(id || 0);
+    const item = pdLeaders.find(x => Number(x.id) === currentPdLeaderId);
+    if (!item) return;
+  
+    document.getElementById("pdLeaderDepartment").value = item.department || "";
+    document.getElementById("pdLeaderNick").value = item.nick || "";
+    document.getElementById("pdLeaderAccountId").value = item.account_id || "";
+    document.getElementById("pdLeaderAvatarUrl").value = item.avatar_url || "";
+  
+    uploadedPdLeaderAvatarBase64 = "";
+    const img = document.getElementById("pdLeaderAvatarPreview");
+    if (item.avatar_url) {
+      img.src = item.avatar_url;
+      img.classList.remove("hidden");
+    } else {
+      img.classList.add("hidden");
+    }
+  
+    renderPdLeadersList();
+  }
+  
+  async function savePdLeader() {
+    if (!currentPdLeaderId) {
+      showStatus("pdLeaderMsg", "Сначала выбери лидера", "error");
+      return;
+    }
+  
+    try {
+      let avatar_url = document.getElementById("pdLeaderAvatarUrl").value.trim();
+  
+      if (uploadedPdLeaderAvatarBase64) {
+        const up = await apiPost("/api/ws/admin/upload-image", {
+          image_base64: uploadedPdLeaderAvatarBase64
+        }, true);
+        if (!up.data.ok) throw new Error(up.data.error || "Ошибка загрузки аватара");
+        avatar_url = up.data.image_url || avatar_url;
+      }
+  
+      const { data } = await policeApiPost("/api/police/admin/leaders/update", {
+        leader_id: currentPdLeaderId,
+        nick: document.getElementById("pdLeaderNick").value.trim(),
+        account_id: document.getElementById("pdLeaderAccountId").value.trim(),
+        avatar_url
+      });
+  
+      if (!data.ok) throw new Error(data.error || "Ошибка сохранения лидера");
+  
+      showStatus("pdLeaderMsg", "Лидер сохранён", "success");
+      await loadPdLeaders();
+    } catch (e) {
+      showStatus("pdLeaderMsg", e.message, "error");
+    }
+  }
+  
 
   async function loadCurrentSection() {
     if (currentMainSection === "design") {
@@ -6541,6 +6925,152 @@ async function rejectModerationContract() {
     }
   }
 
+
+  async function loadPdWeeklyRows() {
+    [
+      "pdWeekStart","pdWeekEnd","pdNick1","pdAsh1","pdDept1",
+      "pdNick2","pdAsh2","pdDept2","pdNick3","pdAsh3","pdDept3",
+      "pdWeekTotalAsh"
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    renderPdWeeklyList();
+  }
+  
+  function collectPdWeeklyPayload() {
+    return {
+      week_start: document.getElementById("pdWeekStart").value,
+      week_end: document.getElementById("pdWeekEnd").value,
+      nick_1: document.getElementById("pdNick1").value.trim(),
+      ash_1: Number(document.getElementById("pdAsh1").value || 0),
+      dept_1: document.getElementById("pdDept1").value.trim(),
+      nick_2: document.getElementById("pdNick2").value.trim(),
+      ash_2: Number(document.getElementById("pdAsh2").value || 0),
+      dept_2: document.getElementById("pdDept2").value.trim(),
+      nick_3: document.getElementById("pdNick3").value.trim(),
+      ash_3: Number(document.getElementById("pdAsh3").value || 0),
+      dept_3: document.getElementById("pdDept3").value.trim(),
+      total_ash: Number(document.getElementById("pdWeekTotalAsh").value || 0)
+    };
+  }
+
+  async function loadPdActivityRewards() {
+  } catch (e) {
+    showStatus("pdRewardMsg", e.message, "error");
+  }
+}
+
+function renderPdRewardsList() {
+  const wrap = document.getElementById("pdRewardsList");
+  wrap.innerHTML = "";
+
+  if (!pdActivityRewards.length) {
+    wrap.innerHTML = `<div class="muted">Награды активности не найдены</div>`;
+    return;
+  }
+
+  pdActivityRewards.forEach(item => {
+    const active = Number(item.id) === Number(currentPdRewardId);
+    const el = document.createElement("div");
+    el.className = "item" + (active ? " active" : "");
+    el.innerHTML = `
+      <div class="item-title">${escapeHtml(item.title || item.activity_key || "—")}</div>
+      <div class="item-meta">
+        key: ${escapeHtml(item.activity_key || "—")}<br>
+        ash_value: ${Number(item.ash_value || 0)}<br>
+        active: ${item.is_active ? "true" : "false"}
+      </div>
+    `;
+    el.onclick = () => selectPdReward(item.id);
+    wrap.appendChild(el);
+  });
+}
+
+function selectPdReward(id) {
+  currentPdRewardId = Number(id || 0);
+  const item = pdActivityRewards.find(x => Number(x.id) === currentPdRewardId);
+  if (!item) return;
+
+  document.getElementById("pdRewardKey").value = item.activity_key || "";
+  document.getElementById("pdRewardTitle").value = item.title || "";
+  document.getElementById("pdRewardValue").value = Number(item.ash_value || 0);
+  document.getElementById("pdRewardIsActive").value = String(item.is_active !== false);
+
+  renderPdRewardsList();
+}
+
+async function savePdReward() {
+  if (!currentPdRewardId) {
+    showStatus("pdRewardMsg", "Сначала выбери награду", "error");
+    return;
+  }
+
+  try {
+    const { data } = await policeApiPost("/api/police/admin/activity-rewards/update", {
+      reward_id: currentPdRewardId,
+      activity_key: document.getElementById("pdRewardKey").value.trim(),
+      title: document.getElementById("pdRewardTitle").value.trim(),
+      ash_value: Number(document.getElementById("pdRewardValue").value || 0),
+      is_active: document.getElementById("pdRewardIsActive").value === "true"
+    });
+
+    if (!data.ok) throw new Error(data.error || "Ошибка сохранения награды");
+
+    showStatus("pdRewardMsg", "Награда сохранена", "success");
+    await loadPdActivityRewards();
+  } catch (e) {
+    showStatus("pdRewardMsg", e.message, "error");
+  }
+}
+  
+  async function savePdWeeklyRow() {
+    try {
+      const payload = collectPdWeeklyPayload();
+      let data;
+  
+      if (currentPdWeeklyId) {
+        ({ data } = await policeApiPost("/api/police/admin/weekly/update", {
+          weekly_id: currentPdWeeklyId,
+          ...payload
+        }));
+      } else {
+        ({ data } = await policeApiPost("/api/police/admin/weekly/create", payload));
+      }
+  
+      if (!data.ok) throw new Error(data.error || "Ошибка сохранения недельной записи");
+  
+      showStatus("pdWeeklyMsg", "Недельная запись сохранена", "success");
+      await loadPdWeeklyRows();
+    } catch (e) {
+      showStatus("pdWeeklyMsg", e.message, "error");
+    }
+  }
+  
+  async function deletePdWeeklyRow() {
+    if (!currentPdWeeklyId) {
+      showStatus("pdWeeklyMsg", "Сначала выбери запись", "error");
+      return;
+    }
+  
+    if (!confirm("Удалить недельную запись?")) return;
+  
+    try {
+      const { data } = await policeApiPost("/api/police/admin/weekly/delete", {
+        weekly_id: currentPdWeeklyId
+      });
+  
+      if (!data.ok) throw new Error(data.error || "Ошибка удаления недельной записи");
+  
+      showStatus("pdWeeklyMsg", "Недельная запись удалена", "success");
+      currentPdWeeklyId = null;
+      await loadPdWeeklyRows();
+    } catch (e) {
+      showStatus("pdWeeklyMsg", e.message, "error");
+    }
+  }
+    
+
   // ================= FILES & BINDS =================
 
   document.getElementById("cardImageFile").addEventListener("change", (e) => {
@@ -6590,6 +7120,19 @@ async function rejectModerationContract() {
       uploadedMyAvatarBase64 = String(reader.result || "");
       const img = document.getElementById("myAvatarPreview");
       img.src = uploadedMyAvatarBase64;
+      img.classList.remove("hidden");
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("pdLeaderAvatarFile")?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      uploadedPdLeaderAvatarBase64 = String(reader.result || "");
+      const img = document.getElementById("pdLeaderAvatarPreview");
+      img.src = uploadedPdLeaderAvatarBase64;
       img.classList.remove("hidden");
     };
     reader.readAsDataURL(file);
@@ -6729,16 +7272,30 @@ async function rejectModerationContract() {
 
   async function bootstrap() {
     try {
-      if (!token()) {
-        showLogin();
-        return;
+      const hasWs = !!getWsToken();
+      const hasPolice = !!getPoliceToken();
+  
+      if (hasWs) {
+        try {
+          await loadMe();
+          await loadCurrentSection();
+          return;
+        } catch {}
       }
-
-      await loadMe();
-      await loadCurrentSection();
+  
+      if (hasPolice) {
+        try {
+          await loadPoliceMe();
+          await loadPoliceCurrentSection();
+          return;
+        } catch {}
+      }
+  
+      showPortalSelect();
     } catch (e) {
-      console.error(e);
-      adminLogout();
+      clearWsToken();
+      clearPoliceToken();
+      showPortalSelect();
     }
   }
 
