@@ -482,7 +482,7 @@
           <div class="panel-head">
             <div>
               <div class="panel-title">Мир скриптинга</div>
-              <div class="panel-sub">Текущая админка сайта World Script</div>
+              <div class="panel-sub">Админка сайта World Script</div>
             </div>
           </div>
           <div class="panel-body stack">
@@ -501,7 +501,7 @@
             </div>
           </div>
           <div class="panel-body stack">
-            <div class="box-note">Отдельный вход через таблицу пользователей полицейского сайта и `api/police/login`.</div>
+            <div class="box-note">Вход в панель редактирования лидерских прав`.</div>
             <div class="tool-row">
               <button class="btn violet" onclick="openPoliceLoginView()">Открыть</button>
             </div>
@@ -6842,10 +6842,23 @@ async function rejectModerationContract() {
 
 
   async function loadPdActivityRewards() {
-  } catch (e) {
-    showStatus("pdRewardMsg", e.message, "error");
+    try {
+      const { data } = await policeApiGet("/api/police/admin/activity-rewards");
+      if (!data.ok) throw new Error(data.error || "Ошибка загрузки наград активности");
+  
+      pdActivityRewards = Array.isArray(data.items) ? data.items : [];
+      renderPdRewardsList();
+  
+      if (pdActivityRewards.length) {
+        const exists = pdActivityRewards.find(x => Number(x.id) === Number(currentPdRewardId));
+        selectPdReward(exists ? exists.id : pdActivityRewards[0].id);
+      } else {
+        newPdReward();
+      }
+    } catch (e) {
+      showStatus("pdRewardMsg", e.message, "error");
+    }
   }
-}
 
 
   async function policeAdminLogin() {
