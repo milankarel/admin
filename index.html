@@ -463,52 +463,98 @@
       .preview-grid{grid-template-columns:1fr}
       .preview-box{grid-column:auto}
     }
+
+    .portal-center-wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:32px;
+      background:
+        radial-gradient(circle at top, rgba(73,168,255,.14), transparent 38%),
+        linear-gradient(180deg,#071018,#08131d 38%,#06111a);
+    }
+    
+    .portal-center-card{
+      width:min(760px,100%);
+      padding:42px 38px;
+      border-radius:32px;
+      background:linear-gradient(180deg,rgba(11,23,34,.96),rgba(13,30,45,.94));
+      border:1px solid rgba(73,168,255,.18);
+      box-shadow:0 30px 80px rgba(0,0,0,.40), 0 0 80px rgba(73,168,255,.08);
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+    }
+    
+    .portal-center-card::before{
+      content:"";
+      position:absolute;
+      inset:-1px;
+      border-radius:inherit;
+      pointer-events:none;
+      background:linear-gradient(135deg,rgba(73,168,255,.14),transparent 30%,transparent 70%,rgba(156,125,255,.10));
+    }
+    
+    .portal-center-kicker{
+      position:relative;
+      z-index:1;
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.24em;
+      color:#8fc5f2;
+      margin-bottom:14px;
+    }
+    
+    .portal-center-title{
+      position:relative;
+      z-index:1;
+      font-size:64px;
+      line-height:1;
+      font-weight:1000;
+      letter-spacing:-.06em;
+      margin-bottom:16px;
+      color:#eef8ff;
+      text-shadow:0 8px 30px rgba(73,168,255,.18);
+    }
+    
+    .portal-center-sub{
+      position:relative;
+      z-index:1;
+      max-width:620px;
+      margin:0 auto;
+      color:var(--muted);
+      font-size:15px;
+      line-height:1.8;
+    }
+    
+    .portal-center-actions{
+      position:relative;
+      z-index:1;
+      margin-top:28px;
+      display:flex;
+      justify-content:center;
+    }
+
+    
   </style>
 </head>
 <body>
 
 
-  <div id="portalSelectView" class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-title">WORLD SCRIPT</div>
-        <div class="brand-sub">Выберите административный раздел</div>
+  <div id="portalSelectView" class="portal-center-wrap">
+    <div class="portal-center-card">
+      <div class="portal-center-kicker">АДМИНИСТРАТИВНАЯ ПАНЕЛЬ</div>
+      <div class="portal-center-title">WORLD SCRIPT</div>
+      <div class="portal-center-sub">
+        Управление сайтом, новостями, пользователями, финансами, контрактами,
+        рулеткой, предметами и внутренними уведомлениями.
       </div>
-    </aside>
   
-    <main class="main">
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-head">
-            <div>
-              <div class="panel-title">Мир скриптинга</div>
-              <div class="panel-sub">Админка сайта World Script</div>
-            </div>
-          </div>
-          <div class="panel-body stack">
-            <div class="box-note">Весь текущий функционал: оформление, финансы, пользователи, контракты, рулетка, новости и т.д.</div>
-            <div class="tool-row">
-              <button class="btn blue" onclick="openWsLoginView()">Открыть</button>
-            </div>
-          </div>
-        </div>
-  
-        <div class="panel">
-          <div class="panel-head">
-            <div>
-              <div class="panel-title">Полицейские разработки</div>
-              <div class="panel-sub">PD-админка лидеров, недель и наград активности</div>
-            </div>
-          </div>
-          <div class="panel-body stack">
-            <div class="box-note">Вход в панель редактирования лидерских прав.</div>
-            <div class="tool-row">
-              <button class="btn violet" onclick="openPoliceLoginView()">Открыть</button>
-            </div>
-          </div>
-        </div>
+      <div class="portal-center-actions">
+        <button class="btn blue" onclick="openWsLoginView()">Открыть панель</button>
       </div>
-    </main>
+    </div>
   </div>
   
   <div id="loginView" class="app">
@@ -1326,6 +1372,47 @@
               </div>
       
               <div id="newsGalleryPreviewList" class="list"></div>
+
+              <div class="panel" style="border-radius:18px;">
+                <div class="panel-body stack">
+                  <div class="panel-title" style="font-size:15px;">Отправка уведомлений</div>
+                  <div class="panel-sub">Выбери, куда отправлять эту новость. Хотя бы один пункт должен быть включён.</div>
+              
+                  <div class="tool-row" style="margin-top:8px;">
+                    <label class="chip blue">
+                      <input id="newsSendToSite" type="checkbox" checked style="margin-right:8px;">
+                      На сайт
+                    </label>
+              
+                    <label class="chip violet">
+                      <input id="newsSendToWsChat" type="checkbox" style="margin-right:8px;">
+                      В беседу WS | Скрипты
+                    </label>
+              
+                    <label class="chip green">
+                      <input id="newsSendToVkUsers" type="checkbox" style="margin-right:8px;">
+                      Всем привязанным пользователям по VK
+                    </label>
+                  </div>
+              
+                  <div class="row">
+                    <div>
+                      <label class="label">Заголовок уведомления</label>
+                      <input id="newsNotifyTitle" class="field" placeholder="Например: Вышло новое обновление World Script">
+                    </div>
+                    <div>
+                      <label class="label">Картинка уведомления (URL)</label>
+                      <input id="newsNotifyImageUrl" class="field" placeholder="https://...">
+                    </div>
+                  </div>
+              
+                  <div>
+                    <label class="label">Текст уведомления</label>
+                    <textarea id="newsNotifyText" class="textarea" placeholder="Текст, который уйдёт в беседу и в VK-пользователям"></textarea>
+                  </div>
+                </div>
+              </div>
+              
       
               <div class="tool-row">
                 <button class="btn blue" onclick="saveNewsItem()">Сохранить</button>
@@ -3140,6 +3227,12 @@ function selectNewsItem(id) {
   const item = newsItems.find(x => Number(x.id) === currentNewsId);
   if (!item) return;
 
+  document.getElementById("newsSendToSite").checked = item.send_to_site !== false;
+  document.getElementById("newsSendToWsChat").checked = !!item.send_to_ws_chat;
+  document.getElementById("newsSendToVkUsers").checked = !!item.send_to_vk_users;
+  document.getElementById("newsNotifyTitle").value = item.notify_title || "";
+  document.getElementById("newsNotifyText").value = item.notify_text || "";
+  document.getElementById("newsNotifyImageUrl").value = item.notify_image_url || "";
   document.getElementById("newsTitle").value = item.title || "";
   document.getElementById("newsBody").value = item.body || "";
   document.getElementById("newsType").value = item.news_type || "info";
@@ -3168,6 +3261,12 @@ function selectNewsItem(id) {
 
 function newNewsItem() {
   currentNewsId = null;
+  document.getElementById("newsSendToSite").checked = true;
+  document.getElementById("newsSendToWsChat").checked = false;
+  document.getElementById("newsSendToVkUsers").checked = false;
+  document.getElementById("newsNotifyTitle").value = "";
+  document.getElementById("newsNotifyText").value = "";
+  document.getElementById("newsNotifyImageUrl").value = "";
   document.getElementById("newsTitle").value = "";
   document.getElementById("newsBody").value = "";
   document.getElementById("newsType").value = "info";
@@ -3188,6 +3287,14 @@ function newNewsItem() {
 }
 
 function collectNewsPayload() {
+  const send_to_site = !!document.getElementById("newsSendToSite").checked;
+  const send_to_ws_chat = !!document.getElementById("newsSendToWsChat").checked;
+  const send_to_vk_users = !!document.getElementById("newsSendToVkUsers").checked;
+
+  if (!send_to_site && !send_to_ws_chat && !send_to_vk_users) {
+    throw new Error("Нужно выбрать хотя бы один канал отправки");
+  }
+
   return {
     title: document.getElementById("newsTitle").value.trim(),
     body: document.getElementById("newsBody").value.trim(),
@@ -3201,8 +3308,42 @@ function collectNewsPayload() {
     gallery_images: document.getElementById("newsGalleryImages").value
       .split("\n")
       .map(x => x.trim())
-      .filter(Boolean)
+      .filter(Boolean),
+
+    send_to_site,
+    send_to_ws_chat,
+    send_to_vk_users,
+    notify_title: document.getElementById("newsNotifyTitle").value.trim(),
+    notify_text: document.getElementById("newsNotifyText").value.trim(),
+    notify_image_url: document.getElementById("newsNotifyImageUrl").value.trim()
   };
+}
+
+function bindNewsSendCheckboxRules() {
+  const ids = ["newsSendToSite", "newsSendToWsChat", "newsSendToVkUsers"];
+  const els = ids.map(id => document.getElementById(id)).filter(Boolean);
+
+  const validate = () => {
+    const checkedCount = els.filter(el => el.checked).length;
+
+    if (checkedCount <= 1) {
+      els.forEach(el => {
+        if (el.checked) {
+          el.disabled = true;
+        } else {
+          el.disabled = false;
+        }
+      });
+    } else {
+      els.forEach(el => el.disabled = false);
+    }
+  };
+
+  els.forEach(el => {
+    el.addEventListener("change", validate);
+  });
+
+  validate();
 }
 
 async function uploadNewsMainImageIfNeeded(payload) {
@@ -7533,6 +7674,7 @@ async function deletePdReward() {
     renderObjectsQueue();
     renderRouletteQueue();
     renderComboBuilderRewards();
+    bindNewsSendCheckboxRules();
     renderContractTemplatesQueue();
     updateTopbarBySection("design");
 
